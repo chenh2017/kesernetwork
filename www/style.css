@@ -1,0 +1,91 @@
+
+ 
+ 
+
+.header-button{
+  background-color: #3c8dbc; 
+  color: white; 
+  border-color: #2E84B6
+}
+.btn-primary > .header-button:hover{
+  background-color: #4CB1EB;
+  color: white
+}
+
+
+.dataTables_wrapper .dataTables_length,
+ .dataTables_wrapper .dataTables_filter,
+  .dataTables_wrapper .dataTables_info,
+   .dataTables_wrapper .dataTables_processing,
+    .dataTables_wrapper .dataTables_paginate,
+     .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+        color: #ffffff;
+}
+
+/*### DT for dark theme ###*/
+.dataTables_wrapper .dataTables_paginate .paginate_button{
+  box-sizing:border-box;
+  display:inline-block;
+  min-width:1.5em;
+  padding:0.5em 1em;
+  margin-left:2px;
+  text-align:center;
+  text-decoration:none !important;
+  cursor:pointer;
+  *cursor:hand;color:#ffffff !important;
+  border:1px solid transparent;
+  border-radius:2px}
+/*###To change text and background color of the `Select` box ###*/
+.dataTables_length select {
+       color: #0E334A;
+       background-color: #0E334A
+       }
+/*To change text and background color of the `Search` box */
+.dataTables_filter input {
+        color: white;
+        background-color: #0E334A
+       }
+thead {
+  color: #ffffff;
+}
+tbody {
+  color: #000000;
+}
+.dataTables_filter > label > input{
+  color: white;
+}
+/*
+.dataTables_scrollHead span {
+  color: black;
+}
+
+.btn-default.hover, .btn-default:active, .btn-default:hover {
+  background-color: #222d32
+}*/
+
+
+
+.btn-primary {
+  background-color: #286090;
+  border-color: #204d74;
+}
+
+.btn-primary:hover {
+  background-color: #204d74;
+  border-color: #122b40;
+}
+
+.btn-primary > a {
+  color: #fff;
+} 
+
+/*a {
+  color: #fff;
+} */
+
+/*
+#tophecodemap > .btn-primary > a {
+  color: #fff;
+}
+*/
+
