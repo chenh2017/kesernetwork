@@ -1,25 +1,25 @@
-library(visNetwork)
+
+library(data.table)
+library(dplyr)
+library(DT)
+library(ggplot2)
+library(highcharter)
+library(igraph)
+library(Matrix)
+library(plotly)
+library(reactable)
+library(rintrojs)
 library(shiny)
 library(shinyBS)
-library(shinyWidgets)
-library(Matrix)
+library(shinycssloaders)
 library(shinydashboard)
 library(shinydashboardPlus)
-library(shinycssloaders)
-library(DT)
-library(data.table)
-library(igraph)
+library(shinyWidgets)
 library(stringr)
-library(dplyr)
-library(rintrojs)
-library(ggplot2)
-library(plotly)
-library(highcharter)
+library(visNetwork)
 
 
-load("data/edge_matrix_0902.RData")
-load("data/attrs.RData")
-load("data/steps.RData")
+load("../data/kesernetwork.RData")
 source("func/utils.R")
 source("func/network.R")
 source("func/sunburst.R")
@@ -145,7 +145,10 @@ ui <- dashboardPage(
                                       min=500,max=1000,value=750,width = "100%"))
                  ),
                  div(uiOutput("sun_ui"),align="center")
-                 )
+                 ),
+        tabPanel(title = "Drugs information",
+                 br(),
+                 uiOutput("ui_drugs"))
       )
     ),
 
@@ -412,6 +415,52 @@ server <- function(input, output, session) {
 
     } else {
       output$tophecodemap <- renderUI({""})
+    }
+  })
+
+  df_drugs <- reactive({
+    RXNORM_drug[RXNORM_drug$feature_id == node_id(), ]
+  })
+
+  drugs_info <- reactive({
+
+    if (sum(!is.na(df_drugs()$LocalDrugNameWithDose)) == 0) {
+      tags$div(
+        # create the tabs with titles as a ul with li/a
+        tags$ul(
+          # class="nav nav-tabs",
+          # role="tablist",
+          lapply(
+            df_drugs()$Code,
+            function(x){
+              tags$li(
+                tags$b("Code: "), x
+              )
+            }
+          )
+        )
+      )
+    } else {
+      # df_drugs[is.na(df_drugs)] <- ""
+      reactableOutput("reac_tb")
+    }
+  })
+
+  output$reac_tb <- renderReactable({
+    reactable(df_drugs()[, 2:3],
+              groupBy = "Code", pagination = FALSE, height = 700
+    )
+  })
+
+  output$ui_drugs <- renderUI({
+    drugs_info()
+  })
+
+  observeEvent(node_id(),{
+    if (node_id() %in% RXNORM_drug$feature_id){
+      showTab(inputId = "hidden_tabs", target = "Drugs information")
+    } else {
+      hideTab(inputId = "hidden_tabs", target = "Drugs information")
     }
   })
 
