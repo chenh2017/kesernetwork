@@ -90,17 +90,14 @@ ui <- dashboardPage(
 
 
 
-    fluidRow(column(7, selectInput("selectmethod", label = "Select data from:",
-                                   choices = list("MGB local" = 1,"VA local" = 2,
-                                                  "MGB integrative" = 3,"VA integrative" = 4),
-                                   selected = 1,width = '100%')),
-             column(5, fluidRow(actionButton("goButton", "Show", width = "100px",
-                                               icon = tags$i(class = "far fa-play-circle",
-                                                             style="font-size: 10px"),
-                                               class = "btn-success"),
-                                actionButton('refresh', 'Unselect', width = "100px",
-                                               icon = tags$i(class = "fa fa-refresh",
-                                                             style="font-size: 10px"))))),
+    selectInput("selectmethod", label = "Select data from:",
+                 choices = list("MGB local" = 1,"VA local" = 2,
+                                "MGB integrative" = 3,"VA integrative" = 4),
+                 selected = 1,width = '100%'),
+    div(actionButton("goButton", "Show network", width = "150px",
+                 icon = tags$i(class = "far fa-play-circle",
+                               style="font-size: 10px"),
+                 class = "btn-success"), align = "center"),
 
     minified = FALSE
   ),
@@ -255,30 +252,37 @@ server <- function(input, output, session) {
   })
 
   output$df_table <-renderDT(datatable({interested_df},
+                                       extensions = c("Buttons", "Select"),
                                        rownames = FALSE,
                                        # width = "250px",
                                        options = list(
                                          paging = FALSE,
                                          scrollY = "300px",
                                          scrollCollapse = TRUE,
+                                         dom = 'Bfrtip',
+                                         select = list(style = 'multiple', items = 'row'),
+                                         buttons = list(
+                                           "selectNone"
+                                         ),
                                          bInfo = FALSE
                                        ),
-                                       selection = list(mode = 'multiple', selected = c(1:20)),
+                                       selection = 'none',
+                                       # selection = list(mode = 'multiple', selected = c(1:20)),
                                        escape = FALSE
   )%>%
     formatStyle(columns=colnames(interested_df),
-                backgroundColor = '#222d32', color = "white"))
+                backgroundColor = '#222d32', color = "white"), server = FALSE)
 
 
 
-  observeEvent(input$refresh, {
-    isolate({
-      reloadData(
-        dataTableProxy('df_table'),
-        resetPaging = TRUE,
-        clearSelection = "all")
-    })
-  })
+  # observeEvent(input$refresh, {
+  #   isolate({
+  #     reloadData(
+  #       dataTableProxy('df_table'),
+  #       resetPaging = TRUE,
+  #       clearSelection = "all")
+  #   })
+  # })
 
 
   observe({
