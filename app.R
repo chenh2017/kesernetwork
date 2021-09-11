@@ -78,7 +78,14 @@ ui <- dashboardPage(
     collapsed = TRUE,
     width = "310pt",
     introjsUI(),
-    uiOutput("ui_table"),
+    tabsetPanel(id = "sidebartabs",
+                tabPanel(title = "select IDs in table",
+                         br(),
+    uiOutput("ui_table")),
+    tabPanel(title = "input IDs",
+             textAreaInput(inputId = "inputids", "Input IDs(separated by semicolon):",
+                           placeholder = "eg:\nPheCode:008.5; PheCode:008.6;...",
+                           width = "100%", height = "300px"))),
 
     div(
     checkboxGroupInput("inCheckboxGroup2", "Candidates",
@@ -100,6 +107,7 @@ ui <- dashboardPage(
                  icon = tags$i(class = "far fa-play-circle",
                                style="font-size: 10px"),
                  class = "btn-success"), align = "center"),
+
 
     minified = FALSE
   ),
@@ -190,7 +198,7 @@ server <- function(input, output, session) {
   selected_lines <- reactive({input$df_table_rows_selected})
 
   selected_nodes = eventReactive(input$goButton,{
-    input$inCheckboxGroup2
+      input$inCheckboxGroup2
     },
     ignoreNULL = FALSE)
 
@@ -291,23 +299,33 @@ server <- function(input, output, session) {
 
 
   observe({
-    if(length(selected_lines())!=0){
-      x = interested[selected_lines()]
-      x.neighbor = sapply(x, function(xx){
-        sum(CosMatrix()[,xx]!=0)
-      })
+    if (input$sidebartabs == "select IDs in table"){
+      if(length(selected_lines())!=0){
+        x = interested[selected_lines()]
+      }else{
+        x = x.name = x.neighbor = NA  # Can use character(0) to remove all choices
+      }
+    } else {
+      inputids = strsplit(input$inputids, "\\s*\\n*;\\s*\\n*", perl = TRUE)[[1]]
+      x = unique(inputids[inputids %in% interested])
+      if(length(x) == 0){
+        x = NA
+      }
+    }
+    if (is.na(unique(x))){
+      x = x.name = x.neighbor = character(0)
+    } else{
+      x.neighbor = sapply(x, function(xx){sum(CosMatrix()[,xx]!=0)})
       x.name = dict.combine$Description[match(x,dict.combine$Variable)]
       x.neighbor = paste0(x.name," (" ,x.neighbor," neighbors)")
-    }else{
-      x = x.name = x.neighbor = character(0)  # Can use character(0) to remove all choices
     }
 
     updateCheckboxGroupInput(session, "inCheckboxGroup2",
                              label = paste(length(x), " candidate nodes:"),
                              choiceValues = x,
                              choiceNames = x.neighbor,
-                             selected = x
-    )
+                             selected = x)
+
   })
 
 
@@ -319,7 +337,7 @@ server <- function(input, output, session) {
       return()
     if(length(selected_nodes())>=10){
       id <<- showNotification(paste("You've chosen ", length(selected_nodes())," nodes. It will take a while to finish plotting..."),
-                              duration = max(5,3*length(selected_nodes())), type = "message")
+                              duration = 3, type = "message")
 
     }
     # Save the ID for removal later
