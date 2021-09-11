@@ -75,14 +75,15 @@ dataNetwork <- function(root.node, CosMatrix, dict.combine, attrs){
 }
 
 
-add_attr_network <- function(p){
-  p %>% visNodes(color = list(background = "lightblue",
+add_attr_network <- function(p, layout = "layout_nicely"){
+  p %>%
+    visNodes(color = list(background = "lightblue",
                               border = "darkblue",
                               highlight = "yellow"),
                  shadow = list(enabled = TRUE, size = 10)) %>%
     visEdges(physics = FALSE,
-             smooth = FALSE,
-             hoverWidth = 2.5) %>%
+    smooth = FALSE,
+    hoverWidth = 2.5) %>%
     visOptions(highlightNearest = list(enabled = T,
                                        degree = 1,
                                        hover = FALSE,
@@ -91,9 +92,8 @@ add_attr_network <- function(p){
                                  `multiple` = TRUE,
                                  `main` = "Select by group"),
                collapse = FALSE) %>%
-    visInteraction(hover = TRUE,
-                   navigationButtons = TRUE) %>%
-    visIgraphLayout(layout = "layout_nicely",
+    visInteraction(hover = TRUE) %>%
+    visIgraphLayout(layout = layout,
                     physics = FALSE,
                     smooth = FALSE,
                     type = "square") %>%
@@ -104,7 +104,7 @@ add_attr_network <- function(p){
 }
 
 
-plot_network <- function(s, cluster, draw.data, hide_label, CosMatrix, dict.combine, attrs){
+plot_network <- function(s, cluster, draw.data, hide_label, CosMatrix, dict.combine, attrs, layout, gravitationalConstant){
 
     input.correct = s[1:min(50,length(s))]
     root.node = match(input.correct, colnames(CosMatrix))
@@ -113,12 +113,17 @@ plot_network <- function(s, cluster, draw.data, hide_label, CosMatrix, dict.comb
     df_groups = draw.data[[3]]
     attrs$legend_groups <- attrs$legend_groups[attrs$legend_groups$label %in% c(unique(df_nodes$Cap_label), "Node:", "Group:"), ]
     if(hide_label){
-      df_nodes$label[df_nodes$nodetype == "other"] <- ""
+      df_nodes$label <- ""
       df_nodes$font.background <- NA
       df_nodes$shape[df_nodes$nodetype == "other"] <- "circle"
       attrs$legend_groups$shape[1:7] <- "dot"
       attrs$legend_groups$size[1:7] <- 10
-      attrs$legend_groups$borderWidth <- 0
+      attrs$legend_groups$borderWidth <- 1
+      df_nodes$borderWidth <- 1
+      attrs$legend_groups$color.border <- "#feeeed"
+      # attrs$legend_groups$font.background <- "lightgrey"
+      attrs$legend_groups$font.color <- "white"
+
       }
     if(cluster){
       df_nodes$mass[1:length(root.node)]=40
@@ -148,7 +153,8 @@ plot_network <- function(s, cluster, draw.data, hide_label, CosMatrix, dict.comb
                   stepX = 150,
                   stepY = 75,
                   ncol=1)
-      add_attr_network(p)
+        # layout = ifelse(length(input.correct) >= 19, "layout_with_mds", "layout_nicely")
+      add_attr_network(p, layout)
     }
 
 }

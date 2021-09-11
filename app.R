@@ -26,6 +26,10 @@ source("func/sunburst.R")
 source("func/circularStatic.R")
 source("func/circularInteractive.R")
 
+interested_df <- data.frame("nodeID"=colnames(cos.list[[1]]),
+             "Description"=str_wrap(dict.combine$Description[match(colnames(cos.list[[1]]),dict.combine$Variable)], width = 35))
+
+
 #  ui ---------------------------
 ui <- dashboardPage(
   dashboardHeader(title = "KESER Network",
@@ -38,7 +42,9 @@ ui <- dashboardPage(
                       status = "primary",
                       circle = FALSE,
                       checkboxInput("cluster", "Cluster by groups*", value = FALSE),
-                      checkboxInput("label_network", "Hide the labels", value = FALSE),
+                      checkboxInput("label_network", "Hide the labels", value = TRUE),
+                      selectInput("network_layout", "The layout of network",
+                                  choices = c("layout_nicely", "layout_with_mds", "layout_with_graphopt", "layout_with_lgl"), selected = "layout_nicely"),
                       selectInput("Focus", label = "Focus on node:",
                                   choices = "All", width = "100%"),
                       sliderInput("scale_id","Focus scale:", min=1,max=10,value=5,width = "100%"),
@@ -67,21 +73,18 @@ ui <- dashboardPage(
                   ),
                   titleWidth = "310pt"
   ),
-  dashboardSidebar(
+  dashboardSidebar(collapsed = TRUE,
     width = "310pt",
     introjsUI(),
     uiOutput("ui_table"),
 
+    div(
     checkboxGroupInput("inCheckboxGroup2", "Candidates",
-                       choiceValues = c("PheCode:008.5",
-                                        "PheCode:008.6",
-                                        "PheCode:008"),
-                       choiceNames = c("bacterial enteritis (196 neighbors)",
-                                       "viral enteritis (65 neighbors)",
-                                       "intestinal infection (81 neighbors)"),
-                       selected = c("PheCode:008.5",
-                                    "PheCode:008.6",
-                                    "PheCode:008")),
+                       choiceValues = c("PheCode:008.5", "PheCode:008.6", "PheCode:008.7", "PheCode:008", "PheCode:010", "PheCode:031"  , "PheCode:038.1", "PheCode:038.2", "PheCode:038.3", "PheCode:038", "PheCode:041.1", "PheCode:041.2", "PheCode:041.4", "PheCode:041.8", "PheCode:041.9", "PheCode:041", "PheCode:053.1", "PheCode:053"  , "PheCode:054"),
+                       choiceNames = c("PheCode:008.5", "PheCode:008.6", "PheCode:008.7", "PheCode:008", "PheCode:010", "PheCode:031"  , "PheCode:038.1", "PheCode:038.2", "PheCode:038.3", "PheCode:038", "PheCode:041.1", "PheCode:041.2", "PheCode:041.4", "PheCode:041.8", "PheCode:041.9", "PheCode:041", "PheCode:053.1", "PheCode:053"  , "PheCode:054"),
+                       selected = c("PheCode:008.5", "PheCode:008.6", "PheCode:008.7", "PheCode:008", "PheCode:010", "PheCode:031"  , "PheCode:038.1", "PheCode:038.2", "PheCode:038.3", "PheCode:038", "PheCode:041.1", "PheCode:041.2", "PheCode:041.4", "PheCode:041.8", "PheCode:041.9", "PheCode:041", "PheCode:053.1", "PheCode:053"  , "PheCode:054"),
+                       width = "100%"),
+    id = "divcheckboxgroups"),
 
 
 
@@ -227,7 +230,7 @@ server <- function(input, output, session) {
     if (length(selected_nodes()) > 0){
       # shinycssloaders::withSpinner(
         visNetworkOutput("network_proxy_nodes",
-                         height =  paste0(max(input$slider_h,shinybrowser::get_height()),"px"))
+                         height =  paste0(max(input$slider_h,(shinybrowser::get_height()) - 50),"px"))
       # , type = 6
       # )
     } else{
@@ -240,10 +243,10 @@ server <- function(input, output, session) {
 
   })
 
-  interested_df <- reactive({
-    data.frame("Node id"=interested,
-               "Description"=str_wrap(dict.combine$Description[match(interested,dict.combine$Variable)], width = 35))
-  })
+  # interested_df <- reactive({
+  #   data.frame("Node id"=interested,
+  #              "Description"=str_wrap(dict.combine$Description[match(interested,dict.combine$Variable)], width = 35))
+  # })
 
   output$ui_table <- renderUI({
     # withSpinner(
@@ -251,7 +254,7 @@ server <- function(input, output, session) {
       # ,type = 6)
   })
 
-  output$df_table <-renderDT(datatable({interested_df()},
+  output$df_table <-renderDT(datatable({interested_df},
                                        rownames = FALSE,
                                        # width = "250px",
                                        options = list(
@@ -260,10 +263,10 @@ server <- function(input, output, session) {
                                          scrollCollapse = TRUE,
                                          bInfo = FALSE
                                        ),
-                                       selection = list(mode = 'multiple', selected = c(1,2,4)),
+                                       selection = list(mode = 'multiple', selected = c(1:20)),
                                        escape = FALSE
   )%>%
-    formatStyle(columns=colnames(interested_df()),
+    formatStyle(columns=colnames(interested_df),
                 backgroundColor = '#222d32', color = "white"))
 
 
@@ -325,7 +328,7 @@ server <- function(input, output, session) {
   })
 
   output$network_proxy_nodes <- renderVisNetwork({
-    plot_network(selected_nodes(), cluster(), draw.data(), input$label_network, CosMatrix(), dict.combine, attrs)
+    plot_network(selected_nodes(), cluster(), draw.data(), input$label_network, CosMatrix(), dict.combine, attrs, input$network_layout)
   })
 
   ## Generate sunburst plot using plotly =======================================

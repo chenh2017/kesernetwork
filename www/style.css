@@ -1,10 +1,10 @@
 
- 
- 
+
+
 
 .header-button{
-  background-color: #3c8dbc; 
-  color: white; 
+  background-color: #3c8dbc;
+  color: white;
   border-color: #2E84B6
 }
 .btn-primary > .header-button:hover{
@@ -77,7 +77,7 @@ tbody {
 
 .btn-primary > a {
   color: #fff;
-} 
+}
 
 /*a {
   color: #fff;
@@ -89,3 +89,33 @@ tbody {
 }
 */
 
+
+
+
+
+#divcheckboxgroups{
+ max-height: 400px;
+ overflow: auto;
+ margin-top: 20px;
+}
+
+
+.content{
+  padding-top: 0;
+  background-color: #222d32;
+}
+
+
+#network_proxy_nodes > hr{
+  background-color: #222d32;
+  color: #222d32;
+  margin: 0;
+}
+
+.skin-blue .main-header .navbar, .skin-blue .main-header .logo {
+  background-color: #222d32;
+}
+
+.skin-blue .main-header .logo:hover {
+    background-color: #222d32;
+}
