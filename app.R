@@ -73,7 +73,9 @@ ui <- dashboardPage(
                   ),
                   titleWidth = "310pt"
   ),
-  dashboardSidebar(collapsed = TRUE,
+  dashboardSidebar(
+    id = "sidebar",
+    collapsed = TRUE,
     width = "310pt",
     introjsUI(),
     uiOutput("ui_table"),
@@ -90,10 +92,10 @@ ui <- dashboardPage(
 
 
 
-    selectInput("selectmethod", label = "Select data from:",
+    div(selectInput("selectmethod", label = "Select data from:",
                  choices = list("MGB local" = 1,"VA local" = 2,
                                 "MGB integrative" = 3,"VA integrative" = 4),
-                 selected = 1,width = '100%'),
+                 selected = 1,width = '100%'), id = "divselectmethod"),
     div(actionButton("goButton", "Show network", width = "150px",
                  icon = tags$i(class = "far fa-play-circle",
                                style="font-size: 10px"),
@@ -176,6 +178,9 @@ ui <- dashboardPage(
 server <- function(input, output, session) {
 
   observeEvent(input$help, {
+    if(!input$sidebar){
+      updateSidebar("sidebar")
+    }
     introjs(session,
             options = list(steps=steps[, -1],
                            showBullets = FALSE))})
