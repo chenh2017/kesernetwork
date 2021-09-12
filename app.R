@@ -312,7 +312,7 @@ server <- function(input, output, session) {
         x = NA
       }
     }
-    if (is.na(unique(x))){
+    if (is.na(unique(x)[1])){
       x = x.name = x.neighbor = character(0)
     } else{
       x.neighbor = sapply(x, function(xx){sum(CosMatrix()[,xx]!=0)})
