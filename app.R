@@ -31,7 +31,8 @@ interested_df <- data.frame("nodeID"=colnames(cos.list[[1]]),
 
 
 #  ui ---------------------------
-ui <- dashboardPage(
+ui <- function(request) {
+  dashboardPage(
   dashboardHeader(title = "KESER Network",
                   leftUi = tagList(
                     includeCSS("www/style.css"),
@@ -56,20 +57,23 @@ ui <- dashboardPage(
                                  icon = icon("download"),
                                  class="btn btn-primary header-button",
                                  width = "100px",
-                                 style = "padding: 6px;"
+                                 style = "padding: 6px;",
+                                 title = "The cosine similarity of current network."
                     ),
-                    downloadButton("instruct", " About",
+                    bookmarkButton(label = "Bookmark", id = "bookmark",
+                                   class="btn btn-primary header-button"),
+                    actionButton("instruct", " About",
                                  icon = icon("book"),
                                  class="btn btn-primary header-button",
                                  width = "100px",
-                                 style = "padding: 6px 20px 6px 20px;"),
+                                 style = "padding: 6px 20px 6px 20px;",
+                                 title = "The introduction of the app."),
                     actionButton("help", " Help",
                                    icon = icon("question"),
                                    class="btn btn-primary header-button",
                                    width = "100px",
-                                   style = "padding: 6px 20px 6px 20px;")
-
-
+                                   style = "padding: 6px 20px 6px 20px;",
+                                 title = "The introduction tour.")
                   ),
                   titleWidth = "310pt"
   ),
@@ -178,6 +182,8 @@ ui <- dashboardPage(
       )
   )
 )
+
+}
 
 
 
@@ -517,5 +523,5 @@ server <- function(input, output, session) {
   })
 }
 
-shinyApp(ui = ui, server = server)
+shinyApp(ui = ui, server = server, enableBookmarking = "server")
 
