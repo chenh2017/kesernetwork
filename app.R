@@ -521,6 +521,11 @@ server <- function(input, output, session) {
       visNetworkProxy("network_proxy_nodes")
     }
   })
+
+  observeEvent(input$bookmark, {
+    session$doBookmark()
+  })
+
 }
 
 shinyApp(ui = ui, server = server, enableBookmarking = "server")
