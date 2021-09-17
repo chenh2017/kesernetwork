@@ -42,8 +42,6 @@ ui <- function(request) {
                       icon = icon("sliders"),
                       status = "primary",
                       circle = FALSE,
-                      checkboxInput("cluster", "Cluster by groups*", value = FALSE),
-                      checkboxInput("label_network", "Hide the labels", value = TRUE),
                       selectInput("network_layout", "The layout of network",
                                   choices = c("layout_nicely", "layout_with_mds", "layout_with_graphopt", "layout_with_lgl"), selected = "layout_nicely"),
                       selectInput("Focus", label = "Focus on node:",
@@ -111,6 +109,8 @@ ui <- function(request) {
                  icon = tags$i(class = "far fa-play-circle",
                                style="font-size: 10px"),
                  class = "btn-success"), align = "center"),
+    checkboxInput("cluster", "Cluster by groups", value = FALSE),
+    checkboxInput("label_network", "Hide the labels", value = TRUE),
 
 
     minified = FALSE
