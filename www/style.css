@@ -43,7 +43,7 @@
 /*To change text and background color of the `Search` box */
 .dataTables_filter input {
         color: white;
-        background-color: #0E334A
+        background-color: #F4F2F2;
        }
 thead {
   color: #ffffff;
