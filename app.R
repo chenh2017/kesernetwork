@@ -102,9 +102,12 @@ ui <- function(request) {
                  width = '100%'), id = "divselectmethod"),
     fluidRow(
       column(6,
-             checkboxInput("cluster", "Cluster by groups", value = FALSE),
-             checkboxInput("hide_labels", "Hide the labels", value = TRUE)
-             ),
+             div(
+               checkboxInput("cluster", "Cluster by groups", value = FALSE),
+               checkboxInput("hide_labels", "Hide the labels", value = TRUE),
+               id = "div_checkbox"
+             )
+            ),
       column(6,
              div(actionButton("goButton", "Show network", width = "150px",
                               icon = tags$i(class = "far fa-play-circle",
