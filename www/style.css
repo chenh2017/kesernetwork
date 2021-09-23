@@ -146,3 +146,14 @@ body::-webkit-scrollbar-thumb {
   box-shadow: inset 2px 2px 5px 0 rgba(#fff, 0.5);
 }*/
 
+
+section.sidebar .shiny-input-container {
+  padding-top: 0;
+  margin-bottom: 0;
+}
+
+.shiny-notification {
+             position:fixed;
+             top: 50px;
+             left: 698pt;
+             }

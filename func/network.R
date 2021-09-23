@@ -123,8 +123,8 @@ plot_network <- function(s, cluster, draw.data, hide_label, CosMatrix, dict.comb
       attrs$legend_groups$color.border <- "#feeeed"
       # attrs$legend_groups$font.background <- "lightgrey"
       attrs$legend_groups$font.color <- "white"
-      attrs$legend_edges$font.color <- "white"
-      attrs$legend_edges$font.background <- NA
+      # attrs$legend_edges$font.color <- "white"
+      # attrs$legend_edges$font.background <- NA
       }
     if(cluster){
       df_nodes$mass[1:length(root.node)]=40
@@ -134,7 +134,7 @@ plot_network <- function(s, cluster, draw.data, hide_label, CosMatrix, dict.comb
         visLegend(width = 0.09, position = "right",
                   addNodes = attrs$legend_groups,
                   addEdges = attrs$legend_edges,
-                  useGroups = FALSE, zoom = FALSE,
+                  useGroups = FALSE, zoom = TRUE,
                   stepX = 150, stepY = 75,ncol=1) %>%
         visClusteringByGroup(groups = df_groups$group,
                              label = "Group:\n",
@@ -150,7 +150,7 @@ plot_network <- function(s, cluster, draw.data, hide_label, CosMatrix, dict.comb
                   width = 0.09,
                   position = "right",
                   useGroups = FALSE,
-                  zoom = FALSE,
+                  zoom = TRUE,
                   stepX = 150,
                   stepY = 75,
                   ncol=1)

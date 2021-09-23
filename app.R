@@ -91,20 +91,18 @@ ui <- function(request) {
 
     div(
     checkboxGroupInput("inCheckboxGroup2", "Candidates",
-                       choiceValues = c("PheCode:008.5", "PheCode:008.6", "PheCode:008.7", "PheCode:008", "PheCode:010", "PheCode:031"  , "PheCode:038.1", "PheCode:038.2", "PheCode:038.3", "PheCode:038", "PheCode:041.1", "PheCode:041.2", "PheCode:041.4", "PheCode:041.8", "PheCode:041.9", "PheCode:041", "PheCode:053.1", "PheCode:053"  , "PheCode:054"),
-                       choiceNames = c("PheCode:008.5", "PheCode:008.6", "PheCode:008.7", "PheCode:008", "PheCode:010", "PheCode:031"  , "PheCode:038.1", "PheCode:038.2", "PheCode:038.3", "PheCode:038", "PheCode:041.1", "PheCode:041.2", "PheCode:041.4", "PheCode:041.8", "PheCode:041.9", "PheCode:041", "PheCode:053.1", "PheCode:053"  , "PheCode:054"),
-                       selected = c("PheCode:008.5", "PheCode:008.6", "PheCode:008.7", "PheCode:008", "PheCode:010", "PheCode:031"  , "PheCode:038.1", "PheCode:038.2", "PheCode:038.3", "PheCode:038", "PheCode:041.1", "PheCode:041.2", "PheCode:041.4", "PheCode:041.8", "PheCode:041.9", "PheCode:041", "PheCode:053.1", "PheCode:053"  , "PheCode:054"),
+                       choiceValues = c("PheCode:008.5", "PheCode:008.6", "PheCode:008.7", "PheCode:008", "PheCode:010", "PheCode:031"  , "PheCode:038.1", "PheCode:038.2", "PheCode:038.3", "PheCode:038", "PheCode:041.1", "PheCode:041.2"),
+                       choiceNames = c("PheCode:008.5", "PheCode:008.6", "PheCode:008.7", "PheCode:008", "PheCode:010", "PheCode:031"  , "PheCode:038.1", "PheCode:038.2", "PheCode:038.3", "PheCode:038", "PheCode:041.1", "PheCode:041.2"),
+                       selected = c("PheCode:008.5", "PheCode:008.6", "PheCode:008.7", "PheCode:008", "PheCode:010", "PheCode:031"  , "PheCode:038.1", "PheCode:038.2", "PheCode:038.3", "PheCode:038", "PheCode:041.1", "PheCode:041.2"),
                        width = "100%"),
     id = "divcheckboxgroups"),
-
-
-
-
-
     div(selectInput("selectmethod", label = "Select data from:",
-                 choices = list("MGB local" = 1,"VA local" = 2,
-                                "MGB integrative" = 3,"VA integrative" = 4),
-                 selected = 1,width = '100%'), id = "divselectmethod"),
+                 choices = list("VA network trained w VA & MGB data" = "VA_integrative",
+                                "VA network trained w VA data only" = "VA_local",
+                                "MGB network trained w MGB & VA data" = "MGB_integrative",
+                                "MGB network trained w MGB data only" = "MGB_local"),
+                 selected = "VA_integrative",
+                 width = '100%'), id = "divselectmethod"),
     div(actionButton("goButton", "Show network", width = "150px",
                  icon = tags$i(class = "far fa-play-circle",
                                style="font-size: 10px"),
@@ -190,6 +188,9 @@ ui <- function(request) {
 # server ---------------------
 
 server <- function(input, output, session) {
+  
+  showNotification("Click 'Help' button to open step-by-step instructions.",
+                   duration = 3, type = "warning")
 
   observeEvent(input$help, {
     if(!input$sidebar){
@@ -209,7 +210,7 @@ server <- function(input, output, session) {
     ignoreNULL = FALSE)
 
   method = eventReactive(input$goButton,{
-    as.numeric(input$selectmethod)
+    input$selectmethod
   },
   ignoreNULL = FALSE)
 
@@ -244,11 +245,11 @@ server <- function(input, output, session) {
 
   output$network <- renderUI({
     if (length(selected_nodes()) > 0){
-      # shinycssloaders::withSpinner(
+      shinycssloaders::withSpinner(
         visNetworkOutput("network_proxy_nodes",
                          height =  paste0(max(input$slider_h,(shinybrowser::get_height()) - 50),"px"))
-      # , type = 6
-      # )
+      , type = 6
+      )
     } else{
       div(tags$span("Try to click some rows in "),
           tagList(icon("table")),
