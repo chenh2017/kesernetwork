@@ -160,4 +160,10 @@ section.sidebar .shiny-input-container {
              
 button#goButton {
     margin-top: 20px;
-}             
+}
+
+
+.modal-content{
+  padding-left: 20px;
+  padding-right: 20px;
+}
