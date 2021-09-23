@@ -171,7 +171,7 @@ ui <- function(request) {
 
     bsModal(
       id = "unlisted_node", title = "Node infomation", trigger = FALSE,
-      size = "small",
+      size = "large", 
       htmlOutput("unlisted_node_info")
     ),
 

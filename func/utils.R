@@ -14,15 +14,52 @@ clickedNodeText <- function(node_id,
   # } else {
   #   node_now_identity = "not in the interested list"
   # }
-  HTML(
-
-  paste0("<h3>",node_id, " </h3>",
-   "<b>Description: </b>",dict.combine$Description[match(node_id,dict.combine$Variable)],
-   "<br><b>Group: </b>", dict.combine$Capinfo[match(node_id,dict.combine$Variable)],
-   "<br><b>Patient prevalence: </b>", round(dict.combine$marginal_pat_VA[match(node_id,dict.combine$Variable)]/12600000,4),
-   "<br><b>Ave count per patient: </b>", round(dict.combine$marginal_freq_VA[match(node_id,dict.combine$Variable)]/
-                                                dict.combine$marginal_pat_VA[match(node_id,dict.combine$Variable)],2))
+  
+  main_info <- HTML(
+    
+    paste0("<h3>",node_id, " </h3>",
+           "<b>Description: </b>",dict.combine$Description[match(node_id,dict.combine$Variable)],
+           "<br><b>Group: </b>", dict.combine$Capinfo[match(node_id,dict.combine$Variable)],
+           "<br><b>Patient prevalence: </b>", round(dict.combine$marginal_pat_VA[match(node_id,dict.combine$Variable)]/12600000,4),
+           "<br><b>Ave count per patient: </b>", round(dict.combine$marginal_freq_VA[match(node_id,dict.combine$Variable)]/
+                                                         dict.combine$marginal_pat_VA[match(node_id,dict.combine$Variable)],2))
   )
+  
+  if (node_id %in% LabMap_0917$LOINC){
+    lab_info <- sort(LabMap_0917$LabChemTestName[LabMap_0917$LOINC == node_id])
+    div(
+      div(main_info, style = "padding-left: 10px;
+                              padding-bottom: 10px;"),
+      div(
+        tags$b("LabChemTestName:", style = "padding-left: 5px;"),
+        div(
+          # create the tabs with titles as a ul with li/a
+          tags$ul(
+            # class="nav nav-tabs",
+            # role="tablist",
+            lapply(
+              lab_info,
+              function(x){
+                tags$li(
+                  x
+                )
+              }
+            )
+          ), style = "height: 565px;
+                      overflow: auto;
+                      background: #fff;
+                      margin-top: 5px;"
+        ), style = "box-shadow: #868585 0px 0px 5px;
+                    height: 600px;
+                    background: #EEEEEE;
+                    padding: 5px;"
+      )
+    )
+  } else {
+    main_info
+  }
+  
+  
 
 
 
