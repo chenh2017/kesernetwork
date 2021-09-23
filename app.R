@@ -80,20 +80,17 @@ ui <- function(request) {
     collapsed = TRUE,
     width = "310pt",
     introjsUI(),
-    tabsetPanel(id = "sidebartabs",
-                tabPanel(title = "select IDs in table",
-                         br(),
-    uiOutput("ui_table")),
-    tabPanel(title = "input IDs",
-             textAreaInput(inputId = "inputids", "Input IDs(separated by semicolon):",
-                           placeholder = "eg:\nPheCode:008.5; PheCode:008.6;...",
-                           width = "100%", height = "300px"))),
+    uiOutput("ui_table"),
 
     div(
-    checkboxGroupInput("inCheckboxGroup2", "Candidates",
-                       choiceValues = c("PheCode:008.5", "PheCode:008.6", "PheCode:008.7", "PheCode:008", "PheCode:010", "PheCode:031"  , "PheCode:038.1", "PheCode:038.2", "PheCode:038.3", "PheCode:038", "PheCode:041.1", "PheCode:041.2"),
-                       choiceNames = c("PheCode:008.5", "PheCode:008.6", "PheCode:008.7", "PheCode:008", "PheCode:010", "PheCode:031"  , "PheCode:038.1", "PheCode:038.2", "PheCode:038.3", "PheCode:038", "PheCode:041.1", "PheCode:041.2"),
-                       selected = c("PheCode:008.5", "PheCode:008.6", "PheCode:008.7", "PheCode:008", "PheCode:010", "PheCode:031"  , "PheCode:038.1", "PheCode:038.2", "PheCode:038.3", "PheCode:038", "PheCode:041.1", "PheCode:041.2"),
+    checkboxGroupInput("inCheckboxGroup2", "5 candidate nodes:",
+                       choiceValues = c("PheCode:008.5", "PheCode:008.7", "PheCode:008", "PheCode:010", "PheCode:031"),
+                       choiceNames = c("bacterial enteritis (196 neighbors)",
+                                       "intestinal infection due to protozoa (39 neighbors)",
+                                       "intestinal infection (81 neighbors)",
+                                       "tuberculosis (121 neighbors)",
+                                       "diseases due to other mycobacteria (142 neighbors)"),
+                       selected = c("PheCode:008.5", "PheCode:008.7", "PheCode:008", "PheCode:010", "PheCode:031"),
                        width = "100%"),
     id = "divcheckboxgroups"),
     div(selectInput("selectmethod", label = "Select data from:",
@@ -275,12 +272,14 @@ server <- function(input, output, session) {
                                        extensions = c("Buttons", "Select"),
                                        rownames = FALSE,
                                        # width = "250px",
+                                       callback = JS("table.rows([0,2,3,4,5]).select();"),
                                        options = list(
                                          paging = FALSE,
                                          scrollY = "300px",
                                          scrollCollapse = TRUE,
                                          dom = 'Bfrtip',
-                                         select = list(style = 'multiple', items = 'row'),
+                                         select = list(style = 'multiple', items = 'row',
+                                                       selector = "td:not(.notselectable)"),
                                          buttons = list(
                                            "selectNone"
                                          ),
@@ -305,19 +304,11 @@ server <- function(input, output, session) {
   # })
 
 
-  observe({
-    if (input$sidebartabs == "select IDs in table"){
-      if(length(selected_lines())!=0){
-        x = interested[selected_lines()]
-      }else{
-        x = x.name = x.neighbor = NA  # Can use character(0) to remove all choices
-      }
-    } else {
-      inputids = strsplit(input$inputids, "\\s*\\n*;\\s*\\n*", perl = TRUE)[[1]]
-      x = unique(inputids[inputids %in% interested])
-      if(length(x) == 0){
-        x = NA
-      }
+  observeEvent(input$df_table_rows_selected, {
+    if(length(selected_lines())!=0){
+      x = interested[selected_lines()]
+    }else{
+      x = x.name = x.neighbor = NA  # Can use character(0) to remove all choices
     }
     if (is.na(unique(x)[1])){
       x = x.name = x.neighbor = character(0)
