@@ -100,12 +100,18 @@ ui <- function(request) {
                                 "MGB network trained w MGB data only" = "MGB_local"),
                  selected = "VA_integrative",
                  width = '100%'), id = "divselectmethod"),
-    div(actionButton("goButton", "Show network", width = "150px",
-                 icon = tags$i(class = "far fa-play-circle",
-                               style="font-size: 10px"),
-                 class = "btn-success"), align = "center"),
-    checkboxInput("cluster", "Cluster by groups", value = FALSE),
-    checkboxInput("label_network", "Hide the labels", value = TRUE),
+    fluidRow(
+      column(6,
+             checkboxInput("cluster", "Cluster by groups", value = FALSE),
+             checkboxInput("hide_labels", "Hide the labels", value = TRUE)
+             ),
+      column(6,
+             div(actionButton("goButton", "Show network", width = "150px",
+                              icon = tags$i(class = "far fa-play-circle",
+                                            style="font-size: 10px"),
+                              class = "btn-success"), align = "center")
+             )
+    ),
 
 
     minified = FALSE
@@ -196,8 +202,16 @@ server <- function(input, output, session) {
     introjs(session,
             options = list(steps=steps[, -1],
                            showBullets = FALSE))})
-
-  cluster = reactive({input$cluster})
+  
+  cluster = eventReactive(input$goButton, {
+    input$cluster
+  },
+  ignoreNULL = FALSE)
+  
+  hide_labels = eventReactive(input$goButton, {
+    input$hide_labels
+  },
+  ignoreNULL = FALSE)
 
   selected_lines <- reactive({input$df_table_rows_selected})
 
@@ -351,9 +365,14 @@ server <- function(input, output, session) {
       NA
     }
   })
+  
+  observeEvent(input$inCheckboxGroup2, {
+      updateCheckboxInput(inputId = "hide_labels",
+                          value = ifelse(length(input$inCheckboxGroup2) < 3, FALSE, TRUE))
+  })
 
   output$network_proxy_nodes <- renderVisNetwork({
-    plot_network(selected_nodes(), cluster(), draw.data(), input$label_network, CosMatrix(), dict.combine, attrs, input$network_layout)
+    plot_network(selected_nodes(), cluster(), draw.data(), hide_labels(), CosMatrix(), dict.combine, attrs, input$network_layout)
   })
 
   ## Generate sunburst plot using plotly =======================================

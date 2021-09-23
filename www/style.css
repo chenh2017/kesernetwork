@@ -157,3 +157,7 @@ section.sidebar .shiny-input-container {
              top: 50px;
              left: 698pt;
              }
+             
+button#goButton {
+    margin-top: 20px;
+}             
