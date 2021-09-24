@@ -3,7 +3,7 @@
 
 ## Clicked node text ============================================================
 clickedNodeText <- function(node_id,
-                            edge_matrix, dict.combine){
+                            edge_matrix, dict.combine, LabMap_0917){
 
   # node_name = dict.combine$Description[match(node_now,dict.combine$Variable)]
 
@@ -14,6 +14,8 @@ clickedNodeText <- function(node_id,
   # } else {
   #   node_now_identity = "not in the interested list"
   # }
+  
+  print("???")
   
   main_info <- HTML(
     
@@ -69,13 +71,9 @@ clickedNodeText <- function(node_id,
 
 
 AddToCandidate <- function(s, x, node_now, CosMatrix, session, dict.combine){
-  if(length(s)!=0 & length(node_now)!=0){
     edge.ma.now = CosMatrix
     loc.node_now = match(node_now, colnames(edge.ma.now))
-    if(is.na(loc.node_now)==FALSE){
-      node_now_name = colnames(edge.ma.now)[loc.node_now]
-      if(!(node_now_name %in% x)){
-        x = c(node_now_name, x)
+        x = c(x, node_now)
         x.neighbor = sapply(x, function(xx){
           sum(CosMatrix[,xx]!=0)
         })
@@ -87,9 +85,6 @@ AddToCandidate <- function(s, x, node_now, CosMatrix, session, dict.combine){
                                  choiceNames = x.neighbor,
                                  selected = x
         )
-      }
-    }
-  }
 }
 
 

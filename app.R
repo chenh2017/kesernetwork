@@ -27,7 +27,10 @@ source("func/circularStatic.R")
 source("func/circularInteractive.R")
 options(stringsAsFactors = FALSE)
 
-
+df_center <- data.frame(
+  "nodeID" = colnames(cos.list[[1]]),
+  "Description" = str_wrap(dict.combine$Description[match(colnames(cos.list[[1]]), dict.combine$Variable)], width = 35)
+)
 
 #  ui ---------------------------
 ui <- function(request) {
@@ -153,10 +156,7 @@ ui <- function(request) {
           ),
           column(
             3,
-            div(actionButton("addButton", "Add to candidates", 
-                             class = "btn-primary active", width = "157px"),
-              align = "center", style = "margin-top: 23px;"
-            ),
+            uiOutput("ui_addbutton"),
             # br(),
             div(actionButton("infoButton",
               class = "btn-primary active", width = "157px",
@@ -241,130 +241,76 @@ server <- function(input, output, session) {
       )
     )
   })
+  
+  
+  ####################  input   #################################################
 
-  cluster <- eventReactive(input$goButton,
-    {
+  cluster <- eventReactive(input$goButton, {
       input$cluster
-    },
-    ignoreNULL = FALSE
+    }, ignoreNULL = FALSE
   )
 
-  hide_labels <- eventReactive(input$goButton,
-    {
+  hide_labels <- eventReactive(input$goButton, {
       input$hide_labels
-    },
-    ignoreNULL = FALSE
+    }, ignoreNULL = FALSE
   )
 
   selected_lines <- reactive({
     input$df_table_rows_selected
   })
 
-  selected_nodes <- eventReactive(input$goButton,
-    {
+  selected_nodes <- eventReactive(input$goButton, {
       input$inCheckboxGroup2
-    },
-    ignoreNULL = FALSE
+    }, ignoreNULL = FALSE
   )
 
-  method <- eventReactive(input$goButton,
-    {
+  method <- eventReactive(input$goButton, {
       input$selectmethod
-    },
-    ignoreNULL = FALSE
+    }, ignoreNULL = FALSE
   )
 
-  node_id <- reactive({
-    input$current_node_id$nodes[[1]]
-  })
+  node_id <- reactive({ input$current_node_id$nodes[[1]] })
 
-  CosMatrix <- reactive({
-    cos.list[[method()]]
-  })
+  CosMatrix <- reactive({ cos.list[[method()]] })
 
   interested <- colnames(cos.list[[1]])
 
-  not_intereted <- reactive({
-    setdiff(rownames(CosMatrix()), interested)
-  })
+  not_intereted <- reactive({ setdiff(rownames(CosMatrix()), interested) })
 
-  observeEvent(node_id(), {
-    if (node_id() %in% colnames(CosMatrix())) {
-      toggleModal(session, "selectednode", toggle = "open")
-    } else {
-      toggleModal(session, "unlisted_node", toggle = "open")
-    }
-  })
-
-  output$unlisted_node_info <- renderUI({
-    clickedNodeText(node_id(), CosMatrix(), dict.combine)
-  })
-
-  output$clicked_node_info <- renderUI({
-    clickedNodeText(node_id(), CosMatrix(), dict.combine)
-  })
-
-
-  output$network <- renderUI({
-    if (length(selected_nodes()) > 0) {
-      shinycssloaders::withSpinner(
-        visNetworkOutput("network_proxy_nodes",
-          height = paste0(max(input$slider_h, (shinybrowser::get_height()) - 50), "px")
-        ),
-        type = 6
-      )
-    } else {
-      div(tags$span("Try to click some rows in "),
-        tagList(icon("table")),
-        tags$spa(" to specify your nodes"),
-        align = "center",
-        style = "padding-top: 40px; font-size: 30px;"
-      )
-    }
-  })
+  ###############  DT input table   ############################################
 
   output$ui_table <- renderUI({
-    # withSpinner(
-    DTOutput("df_table")
-    # ,type = 6)
+    withSpinner(
+      DTOutput("df_table")
+    ,type = 6)
   })
 
-  interested_df <- data.frame(
-    "nodeID" = colnames(cos.list[[1]]),
-    "Description" = str_wrap(dict.combine$Description[match(colnames(cos.list[[1]]), dict.combine$Variable)], width = 35)
-  )
-
-
-  output$df_table <- renderDT(datatable(
-    {
-      interested_df
-    },
+  output$df_table <- renderDT(datatable({
+      df_center
+    }, rownames = FALSE,
     extensions = c("Buttons", "Select"),
-    rownames = FALSE,
-    # width = "250px",
-    callback = JS("table.rows([0,2,3,4,5]).select();"),
+    # callback = JS("table.rows([0,2,3,4,5]).select();"),
     options = list(
       paging = FALSE,
       scrollY = "300px",
       scrollCollapse = TRUE,
       dom = "Bfrtip",
       select = list(
-        style = "multiple", items = "row",
-        selector = "td:not(.notselectable)"
+        style = "multiple", items = "row"#,
+        # selector = "td:not(.notselectable)"
       ),
-      buttons = list(
-        "selectNone"
-      ),
+      buttons = list("selectNone"),
       bInfo = FALSE
     ),
     selection = "none",
-    # selection = list(mode = 'multiple', selected = c(1:20)),
     escape = FALSE
   ) %>%
     formatStyle(
-      columns = colnames(interested_df),
+      columns = colnames(df_center),
       backgroundColor = "#222d32", color = "white"
     ), server = FALSE)
+  
+  ##############  sidebar ######################################################
 
   observeEvent(input$df_table_rows_selected, {
     if (length(selected_lines()) != 0) {
@@ -389,24 +335,43 @@ server <- function(input, output, session) {
       selected = x
     )
   })
-
-
-  id <- NULL
+  
+  
+  observeEvent(input$inCheckboxGroup2, {
+    updateCheckboxInput(
+      inputId = "hide_labels",
+      value = ifelse(length(input$inCheckboxGroup2) < 3, FALSE, TRUE)
+    )
+  })
 
   observeEvent(input$goButton, {
-    # If there's currently a notification, don't add another
-    if (!is.null(id)) {
-      return()
-    }
     if (length(selected_nodes()) >= 10) {
-      id <<- showNotification(paste("You've chosen ", length(selected_nodes()), 
-                                    " nodes. It will take a while to finish plotting..."),
+      showNotification(paste("You've chosen ", length(selected_nodes()), 
+                             " nodes. It will take a while to finish plotting..."),
         duration = 3, type = "message"
       )
     }
-    # Save the ID for removal later
   })
-
+  
+  ######################  network  #############################################
+  
+  output$network <- renderUI({
+    if (length(selected_nodes()) > 0) {
+      shinycssloaders::withSpinner(
+        visNetworkOutput("network_proxy_nodes",
+                         height = paste0(max(input$slider_h, (shinybrowser::get_height()) - 50), "px")
+        ),
+        type = 6
+      )
+    } else {
+      div(tags$span("Try to click some rows in "),
+          tagList(icon("table")),
+          tags$spa(" to specify your nodes"),
+          align = "center",
+          style = "padding-top: 40px; font-size: 30px;"
+      )
+    }
+  })
 
   draw.data <- eventReactive(selected_nodes(), {
     if (length(selected_nodes()) != 0) {
@@ -417,27 +382,42 @@ server <- function(input, output, session) {
       NA
     }
   })
-
-  observeEvent(input$inCheckboxGroup2, {
-    updateCheckboxInput(
-      inputId = "hide_labels",
-      value = ifelse(length(input$inCheckboxGroup2) < 3, FALSE, TRUE)
-    )
-  })
-
+  
   output$network_proxy_nodes <- renderVisNetwork({
-    plot_network(selected_nodes(), cluster(), draw.data(), hide_labels(), CosMatrix(), dict.combine, attrs, input$network_layout)
+    plot_network(selected_nodes(), cluster(), draw.data(), hide_labels(), 
+                 CosMatrix(), dict.combine, attrs, input$network_layout)
+  })
+  
+  ##################### info for clicked node   ################################
+  
+  observeEvent(node_id(), {
+    if (node_id() %in% colnames(CosMatrix())) {
+      toggleModal(session, "selectednode", toggle = "open")
+    } else {
+      toggleModal(session, "unlisted_node", toggle = "open")
+    }
+  })
+  
+  output$unlisted_node_info <- renderUI({
+    clickedNodeText(node_id(), CosMatrix(), dict.combine, LabMap_0917)
+  })
+  
+  output$clicked_node_info <- renderUI({
+    clickedNodeText(node_id(), CosMatrix(), dict.combine, LabMap_0917)
   })
 
+  
+  ########################  plots for center nodes   ###########################
+  
   ## Generate sunburst plot using plotly =======================================
   output$sun_ui <- renderUI({
-    # shinycssloaders::withSpinner(
+    shinycssloaders::withSpinner(
     plotlyOutput("sun",
       width = "auto",
       height = paste0(input$scale_sungh, "px")
     )
-    # , type = 6
-    # )
+    , type = 6
+    )
   })
 
   output$sun <- renderPlotly({
@@ -483,26 +463,39 @@ server <- function(input, output, session) {
     }
   })
 
-
-
   output$circular <- renderPlot({
     circularBar(
       thr_cos_pop = 0.01,
       node_id(), CosMatrix(), dict.combine, attrs
     )
   })
+  
+  ##################  addButton   ##############################################
+  
+  observeEvent(node_id(), {
+    if ((node_id() %in% interested) & (!node_id() %in% selected_nodes())){
+    output$ui_addbutton <- renderUI({
+      div(actionButton("addButton", "Add to candidates", 
+                       class = "btn-primary active", width = "157px"),
+          align = "center", style = "margin-top: 23px;"
+      )
+    })
+    } else {
+      ""
+    }
+  })
 
-  observe({
-    input$addButton
-    isolate({
+  observeEvent(input$addButton, {
       AddToCandidate(
         input$df_table_rows_selected, selected_nodes(),
         node_id(), CosMatrix(), session, dict.combine
       )
-    })
   })
 
   output$downloadData <- WriteData(selected_nodes(), draw.data())
+  
+  
+  ####################  PheCode  add ICD info  #################################
 
   observeEvent(node_id(), {
     if (node_id() %in% phecode$Phecode) {
@@ -520,37 +513,37 @@ server <- function(input, output, session) {
       })
     }
   })
+  
+  
+  ####################  RxNorm  add drug info  #################################
 
   df_drugs <- reactive({
-    RXNORM_drug[RXNORM_drug$feature_id == node_id(), ]
+    full_drug[full_drug$feature_id == node_id(), ]
   })
 
   drugs_info <- reactive({
     if (sum(!is.na(df_drugs()$LocalDrugNameWithDose)) == 0) {
       tags$div(
-        # create the tabs with titles as a ul with li/a
         tags$ul(
-          # class="nav nav-tabs",
-          # role="tablist",
-          lapply(
-            df_drugs()$Code,
-            function(x) {
-              tags$li(
-                tags$b("Code: "), x
-              )
-            }
+          lapply( df_drugs()$Code,
+            function(x) { tags$li( tags$b("Code: "), x) }
           )
         )
       )
     } else {
-      # df_drugs[is.na(df_drugs)] <- ""
       reactableOutput("reac_tb")
     }
   })
 
   output$reac_tb <- renderReactable({
-    reactable(df_drugs()[, 2:3],
-      groupBy = "Code", pagination = FALSE, height = 700
+    reactable({
+      drugs <- df_drugs()[, -1]
+      drugs <- drugs[, apply(drugs, 2, function(x){sum(!is.na(x))>0})]
+      drugs <- drugs[!duplicated(drugs), ]
+      drugs[with(drugs, order(LocalDrugNameWithDose, Code)), ]
+    },
+      groupBy = "Code",
+    pagination = FALSE, height = 500, rownames = FALSE
     )
   })
 
@@ -559,12 +552,15 @@ server <- function(input, output, session) {
   })
 
   observeEvent(node_id(), {
-    if (node_id() %in% RXNORM_drug$feature_id) {
+    if (node_id() %in% full_drug$feature_id) {
       showTab(inputId = "hidden_tabs", target = "Drugs information")
     } else {
       hideTab(inputId = "hidden_tabs", target = "Drugs information")
     }
   })
+  
+  
+  ############  controls for network  ##########################################
 
   observe({
     if (length(selected_nodes()) != 0) {

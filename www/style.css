@@ -42,7 +42,7 @@
        }
 /*To change text and background color of the `Search` box */
 .dataTables_filter input {
-        color: white;
+        color: black;
         background-color: #F4F2F2;
        }
 thead {
