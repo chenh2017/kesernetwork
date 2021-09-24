@@ -564,26 +564,12 @@ server <- function(input, output, session) {
     full_drug[full_drug$feature_id == node_id(), ]
   })
 
-  drugs_info <- reactive({
-    if (sum(!is.na(df_drugs()$LocalDrugNameWithDose)) == 0) {
-      tags$div(
-        tags$ul(
-          lapply( df_drugs()$Code,
-            function(x) { tags$li( tags$b("Code: "), x) }
-          )
-        )
-      )
-    } else {
-      reactableOutput("reac_tb")
-    }
-  })
-
   output$reac_tb <- renderReactable({
     reactable({
       drugs <- df_drugs()[, -1]
+      drugs[with(drugs, order(LocalDrugNameWithDose, Code)), ]
       drugs <- drugs[, apply(drugs, 2, function(x){sum(!is.na(x))>0})]
       drugs <- drugs[!duplicated(drugs), ]
-      drugs[with(drugs, order(LocalDrugNameWithDose, Code)), ]
     },
       groupBy = "Code",
     pagination = FALSE, height = 500, rownames = FALSE
@@ -591,10 +577,10 @@ server <- function(input, output, session) {
   })
 
   output$ui_drugs <- renderUI({
-    drugs_info()
+    reactableOutput("reac_tb")
   })
 
-  observeEvent(node_id(), {
+  observeEvent(input$hidden_tabs, {
     if (node_id() %in% full_drug$feature_id) {
       showTab(inputId = "hidden_tabs", target = "Drugs information")
     } else {
