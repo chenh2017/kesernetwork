@@ -51,9 +51,9 @@ thead {
 tbody {
   color: #000000;
 }
-.dataTables_filter > label > input{
+/*.dataTables_filter > label > input{
   color: white;
-}
+}*/
 /*
 .dataTables_scrollHead span {
   color: black;

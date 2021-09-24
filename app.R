@@ -157,61 +157,18 @@ ui <- function(request) {
           column(
             3,
             uiOutput("ui_addbutton"),
-            # br(),
-            div(actionButton("infoButton",
-              class = "btn-primary active", width = "157px",
-              tags$a("More information", 
-                     href = "https://celehs.github.io/KESER/", 
-                     target = "_blank")
-            ), align = "center", style = "margin-top: 5px;"),
-            # br(),
+            uiOutput("ui_moreinfo"),
             div(uiOutput("tophecodemap"), 
                 align = "center", style = "margin-top: 5px;")
           )
         ),
-        # br(),
-        hr(),
-        tabsetPanel(
-          id = "hidden_tabs",
-          tabPanel(
-            title = "Circular plot",
-            br(),
-            h5("*Bar height reflects cosine similarity"),
-            uiOutput("circularplot")
-          ),
-          tabPanel(
-            title = "Sunburst plot",
-            br(),
-            fluidRow(
-              column(
-                6,
-                sliderTextInput("changeline", "max Text length on each line (set as 99 if not breaking lines:)",
-                  choices = c(5, 10, 15, 20, 25, 99), selected = 10, grid = TRUE, width = "100%"
-                ),
-                pickerInput(
-                  inputId = "rotatelabel",
-                  label = "The orientation of text inside sectors",
-                  choices = c("Radial", "Tangential")
-                )
-              ),
-              column(6, sliderInput("scale_sungh", "Graph height:",
-                min = 500, max = 1000, value = 750, width = "100%"
-              ))
-            ),
-            div(uiOutput("sun_ui"), align = "center")
-          ),
-          tabPanel(
-            title = "Drugs information",
-            br(),
-            uiOutput("ui_drugs")
-          )
-        )
+        uiOutput("clicked_node_plot")
       ),
-      bsModal(
-        id = "unlisted_node", title = "Node infomation", trigger = FALSE,
-        size = "large",
-        htmlOutput("unlisted_node_info")
-      ),
+      # bsModal(
+      #   id = "unlisted_node", title = "Node infomation", trigger = FALSE,
+      #   size = "large",
+      #   htmlOutput("unlisted_node_info")
+      # ),
       bsModal(
         id = "instruction", title = "Instruction", trigger = "instruct",
         size = "large",
@@ -391,11 +348,11 @@ server <- function(input, output, session) {
   ##################### info for clicked node   ################################
   
   observeEvent(node_id(), {
-    if (node_id() %in% colnames(CosMatrix())) {
+    # if (node_id() %in% colnames(CosMatrix())) {
       toggleModal(session, "selectednode", toggle = "open")
-    } else {
-      toggleModal(session, "unlisted_node", toggle = "open")
-    }
+    # } else {
+    #   toggleModal(session, "unlisted_node", toggle = "open")
+    # }
   })
   
   output$unlisted_node_info <- renderUI({
@@ -494,6 +451,32 @@ server <- function(input, output, session) {
 
   output$downloadData <- WriteData(selected_nodes(), draw.data())
   
+  #################  more info button  #########################################
+  
+  observeEvent(node_id(), {
+    cap <- dict.combine$Capinfo[dict.combine$Variable == node_id()]
+    if (cap == "CCS") {
+      href = "https://hcup-us.ahrq.gov/toolssoftware/ccs_svcsproc/ccssvcproc.jsp"
+    }
+    if (cap == "Lab") {
+      href = "https://loinc.org/multiaxial-hierarchy/"
+    }
+    if (cap == "PheCode") {
+      href = "https://phewascatalog.org/phecodes_icd10cm"
+    }
+    if (cap == "RXNORM") {
+      href = "https://mor.nlm.nih.gov/RxNav/"
+    }
+    output$ui_moreinfo <- renderUI({
+      div(actionButton("infoButton",
+                       class = "btn-primary active", width = "157px",
+                       tags$a("More information", 
+                              href = href, 
+                              target = "_blank")
+      ), align = "center", style = "margin-top: 5px;")
+    })
+  })
+  
   
   ####################  PheCode  add ICD info  #################################
 
@@ -511,6 +494,66 @@ server <- function(input, output, session) {
       output$tophecodemap <- renderUI({
         ""
       })
+    }
+  })
+  
+  
+  ####################  plot of clicked node   #################################
+  
+  output$clicked_node_plot <- renderUI({
+    if((node_id() %in% interested)){
+      div(
+      hr(),
+      tabsetPanel(
+        id = "hidden_tabs",
+        tabPanel(
+          title = "Circular plot",
+          br(),
+          h5("*Bar height reflects cosine similarity"),
+          uiOutput("circularplot")
+        ),
+        tabPanel(
+          title = "Sunburst plot",
+          br(),
+          fluidRow(
+            column(
+              6,
+              sliderTextInput("changeline", "max Text length on each line (set as 99 if not breaking lines:)",
+                              choices = c(5, 10, 15, 20, 25, 99), selected = 10, grid = TRUE, width = "100%"
+              ),
+              pickerInput(
+                inputId = "rotatelabel",
+                label = "The orientation of text inside sectors",
+                choices = c("Radial", "Tangential")
+              )
+            ),
+            column(6, sliderInput("scale_sungh", "Graph height:",
+                                  min = 500, max = 1000, value = 750, width = "100%"
+            ))
+          ),
+          div(uiOutput("sun_ui"), align = "center")
+        ),
+        tabPanel(
+          title = "Drugs information",
+          br(),
+          uiOutput("ui_drugs")
+        )
+      )
+      )
+    } else if (node_id() %in% full_drug$feature_id) {
+      div(
+        hr(),
+        tabsetPanel(
+          id = "hidden_tabs",
+          tabPanel(
+            title = "Drugs information",
+            br(),
+            uiOutput("ui_drugs")
+          )
+        )
+      )
+    } else {
+      ""
     }
   })
   

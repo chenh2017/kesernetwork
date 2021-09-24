@@ -2,21 +2,8 @@
 
 
 ## Clicked node text ============================================================
-clickedNodeText <- function(node_id,
-                            edge_matrix, dict.combine, LabMap_0917){
+clickedNodeText <- function(node_id, edge_matrix, dict.combine, LabMap_0917){
 
-  # node_name = dict.combine$Description[match(node_now,dict.combine$Variable)]
-
-  # loc.node_now = match(node_id, colnames(edge_matrix))
-  #
-  # if(node_id %in% colnames(edge_matrix)){
-  #   node_now_identity = "in the interested list"
-  # } else {
-  #   node_now_identity = "not in the interested list"
-  # }
-  
-  print("???")
-  
   main_info <- HTML(
     
     paste0("<h3>",node_id, " </h3>",
@@ -35,10 +22,7 @@ clickedNodeText <- function(node_id,
       div(
         tags$b("LabChemTestName:", style = "padding-left: 5px;"),
         div(
-          # create the tabs with titles as a ul with li/a
           tags$ul(
-            # class="nav nav-tabs",
-            # role="tablist",
             lapply(
               lab_info,
               function(x){
@@ -60,11 +44,6 @@ clickedNodeText <- function(node_id,
   } else {
     main_info
   }
-  
-  
-
-
-
 }
 
 
