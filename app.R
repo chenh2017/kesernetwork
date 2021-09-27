@@ -27,11 +27,6 @@ source("func/circularStatic.R")
 source("func/circularInteractive.R")
 options(stringsAsFactors = FALSE)
 
-df_center <- data.frame(
-  "nodeID" = colnames(cos.list[[1]]),
-  "Description" = str_wrap(dict.combine$Description[match(colnames(cos.list[[1]]), dict.combine$Variable)], width = 35)
-)
-
 #  ui ---------------------------
 ui <- function(request) {
   dashboardPage(
@@ -91,6 +86,18 @@ ui <- function(request) {
       collapsed = TRUE,
       width = "310pt",
       introjsUI(),
+      div(selectInput("selectmethod",
+                      label = "Select data from:",
+                      choices = list(
+                        "VA network trained w VA & MGB data" = "VA_integrative",
+                        "VA network trained w VA data only" = "VA_local",
+                        "MGB network trained w MGB & VA data" = "MGB_integrative",
+                        "MGB network trained w MGB data only" = "MGB_local"
+                      ),
+                      selected = "VA_integrative",
+                      width = "100%"
+      ), id = "divselectmethod"),
+      hr(style = "color: lightgrey;"),
       uiOutput("ui_table"),
       div(
         checkboxGroupInput("inCheckboxGroup2", "5 candidate nodes:",
@@ -109,17 +116,6 @@ ui <- function(request) {
         ),
         id = "divcheckboxgroups"
       ),
-      div(selectInput("selectmethod",
-        label = "Select data from:",
-        choices = list(
-          "VA network trained w VA & MGB data" = "VA_integrative",
-          "VA network trained w VA data only" = "VA_local",
-          "MGB network trained w MGB & VA data" = "MGB_integrative",
-          "MGB network trained w MGB data only" = "MGB_local"
-        ),
-        selected = "VA_integrative",
-        width = "100%"
-      ), id = "divselectmethod"),
       fluidRow(
         column(
           6,
@@ -162,13 +158,48 @@ ui <- function(request) {
                 align = "center", style = "margin-top: 5px;")
           )
         ),
-        uiOutput("clicked_node_plot")
+        hr(),
+        tabsetPanel(
+          id = "hidden_tabs",
+          tabPanel(
+            title = "Circular plot",
+            br(),
+            h5("*Bar height reflects cosine similarity"),
+            uiOutput("circularplot")
+          ),
+          tabPanel(
+            title = "Sunburst plot",
+            br(),
+            fluidRow(
+              column(
+                6,
+                sliderTextInput("changeline", "max Text length on each line (set as 99 if not breaking lines:)",
+                                choices = c(5, 10, 15, 20, 25, 99), selected = 10, grid = TRUE, width = "100%"
+                ),
+                pickerInput(
+                  inputId = "rotatelabel",
+                  label = "The orientation of text inside sectors",
+                  choices = c("Radial", "Tangential")
+                )
+              ),
+              column(6, sliderInput("scale_sungh", "Graph height:",
+                                    min = 500, max = 1000, value = 750, width = "100%"
+              ))
+            ),
+            div(uiOutput("sun_ui"), align = "center")
+          ),
+          tabPanel(
+            title = "Drugs information",
+            br(),
+            uiOutput("ui_drugs")
+          ),
+          tabPanel(
+            title = "Lab information",
+            br(),
+            uiOutput("ui_lab")
+          )
+        )
       ),
-      # bsModal(
-      #   id = "unlisted_node", title = "Node infomation", trigger = FALSE,
-      #   size = "large",
-      #   htmlOutput("unlisted_node_info")
-      # ),
       bsModal(
         id = "instruction", title = "Instruction", trigger = "instruct",
         size = "large",
@@ -202,30 +233,31 @@ server <- function(input, output, session) {
   
   ####################  input   #################################################
 
-  cluster <- eventReactive(input$goButton, {
-      input$cluster
-    }, ignoreNULL = FALSE
-  )
-
-  hide_labels <- eventReactive(input$goButton, {
-      input$hide_labels
-    }, ignoreNULL = FALSE
-  )
-
-  selected_lines <- reactive({
-    input$df_table_rows_selected
-  })
-
+  maxHeight <- reactive({shinybrowser::get_height()})
+  
+  method <- reactive({ input$selectmethod })
+  
+  # selected_rows <- reactive({
+  #   input$df_table_rows_selected
+  # })
+  
+  selected_rows <- reactive({df_input()$nodeID[input$df_table_rows_selected]})
+  
   selected_nodes <- eventReactive(input$goButton, {
       input$inCheckboxGroup2
     }, ignoreNULL = FALSE
   )
 
-  method <- eventReactive(input$goButton, {
-      input$selectmethod
+  cluster <- eventReactive(input$goButton, {
+      input$cluster
     }, ignoreNULL = FALSE
   )
-
+  
+  hide_labels <- eventReactive(input$goButton, {
+      input$hide_labels
+    }, ignoreNULL = FALSE
+  )
+  
   node_id <- reactive({ input$current_node_id$nodes[[1]] })
 
   CosMatrix <- reactive({ cos.list[[method()]] })
@@ -235,6 +267,13 @@ server <- function(input, output, session) {
   not_intereted <- reactive({ setdiff(rownames(CosMatrix()), interested) })
 
   ###############  DT input table   ############################################
+  
+  df_input <- reactive({
+    data.frame(
+      "nodeID" = rownames(CosMatrix()),
+      "Description" = str_wrap(dict.combine$Description[match(rownames(CosMatrix()), dict.combine$Variable)], width = 20)
+    )
+  })
 
   output$ui_table <- renderUI({
     withSpinner(
@@ -243,54 +282,34 @@ server <- function(input, output, session) {
   })
 
   output$df_table <- renderDT(datatable({
-      df_center
-    }, rownames = FALSE,
-    extensions = c("Buttons", "Select"),
-    # callback = JS("table.rows([0,2,3,4,5]).select();"),
-    options = list(
-      paging = FALSE,
-      scrollY = "300px",
-      scrollCollapse = TRUE,
-      dom = "Bfrtip",
-      select = list(
-        style = "multiple", items = "row"#,
-        # selector = "td:not(.notselectable)"
+        df_input()
+      }, rownames = FALSE,
+      extensions = c("Buttons", "Select"),
+      # callback = JS("table.rows([0,2,3,4,5]).select();"),
+      options = list(
+        paging = FALSE,
+        scrollY = "300px",
+        scrollCollapse = TRUE,
+        dom = "Bfrtip",
+        select = list(
+          style = "multiple", items = "row"#,
+          # selector = "td:not(.notselectable)"
+        ),
+        buttons = list("selectNone")#,
+        # bInfo = FALSE
       ),
-      buttons = list("selectNone"),
-      bInfo = FALSE
-    ),
-    selection = "none",
-    escape = FALSE
-  ) %>%
+      selection = "none",
+      escape = FALSE
+    ) %>%
     formatStyle(
-      columns = colnames(df_center),
+      columns = colnames(df_input),
       backgroundColor = "#222d32", color = "white"
     ), server = FALSE)
   
   ##############  sidebar ######################################################
 
-  observeEvent(input$df_table_rows_selected, {
-    if (length(selected_lines()) != 0) {
-      x <- interested[selected_lines()]
-    } else {
-      x <- x.name <- x.neighbor <- NA # Can use character(0) to remove all choices
-    }
-    if (is.na(unique(x)[1])) {
-      x <- x.name <- x.neighbor <- character(0)
-    } else {
-      x.neighbor <- sapply(x, function(xx) {
-        sum(CosMatrix()[, xx] != 0)
-      })
-      x.name <- dict.combine$Description[match(x, dict.combine$Variable)]
-      x.neighbor <- paste0(x.name, " (", x.neighbor, " neighbors)")
-    }
-
-    updateCheckboxGroupInput(session, "inCheckboxGroup2",
-      label = paste(length(x), " candidate nodes:"),
-      choiceValues = x,
-      choiceNames = x.neighbor,
-      selected = x
-    )
+  observeEvent(selected_rows(), {
+    updateCheckboxCandidate(selected_rows(), CosMatrix, session, dict.combine)
   })
   
   
@@ -302,45 +321,52 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$goButton, {
+    print("gobutton1")
     if (length(selected_nodes()) >= 10) {
       showNotification(paste("You've chosen ", length(selected_nodes()), 
                              " nodes. It will take a while to finish plotting..."),
         duration = 3, type = "message"
       )
     }
+    print("gobutton2")
   })
   
   ######################  network  #############################################
   
   output$network <- renderUI({
+    print("network1")
     if (length(selected_nodes()) > 0) {
+      print("network2")
       shinycssloaders::withSpinner(
         visNetworkOutput("network_proxy_nodes",
-                         height = paste0(max(input$slider_h, (shinybrowser::get_height()) - 50), "px")
+                         height = paste0(max(input$slider_h, (maxHeight()) - 50), "px")
         ),
         type = 6
       )
     } else {
+      print("network3")
       div(tags$span("Try to click some rows in "),
           tagList(icon("table")),
           tags$spa(" to specify your nodes"),
           align = "center",
-          style = "padding-top: 40px; font-size: 30px;"
+          style = "padding-top: 40px; font-size: 30px; color: white;"
       )
     }
   })
 
   draw.data <- eventReactive(selected_nodes(), {
+    print("draw.data1")
     if (length(selected_nodes()) != 0) {
       input.correct <- selected_nodes()[1:min(50, length(selected_nodes()))]
-      root.node <- match(input.correct, colnames(CosMatrix()))
-      dataNetwork(root.node = root.node, CosMatrix(), dict.combine, attrs)
+      # root.node <- match(input.correct, rownames(CosMatrix()))
+      dataNetwork(input.correct, CosMatrix(), dict.combine, attrs)
     } else {
       NA
     }
   })
   
   output$network_proxy_nodes <- renderVisNetwork({
+    print("draw_data1")
     plot_network(selected_nodes(), cluster(), draw.data(), hide_labels(), 
                  CosMatrix(), dict.combine, attrs, input$network_layout)
   })
@@ -348,23 +374,15 @@ server <- function(input, output, session) {
   ##################### info for clicked node   ################################
   
   observeEvent(node_id(), {
-    # if (node_id() %in% colnames(CosMatrix())) {
       toggleModal(session, "selectednode", toggle = "open")
-    # } else {
-    #   toggleModal(session, "unlisted_node", toggle = "open")
-    # }
-  })
-  
-  output$unlisted_node_info <- renderUI({
-    clickedNodeText(node_id(), CosMatrix(), dict.combine, LabMap_0917)
   })
   
   output$clicked_node_info <- renderUI({
-    clickedNodeText(node_id(), CosMatrix(), dict.combine, LabMap_0917)
+    clickedNodeText(node_id(), CosMatrix(), dict.combine)
   })
 
   
-  ########################  plots for center nodes   ###########################
+  ########################  plots for clicked nodes   ###########################
   
   ## Generate sunburst plot using plotly =======================================
   output$sun_ui <- renderUI({
@@ -410,14 +428,10 @@ server <- function(input, output, session) {
 
   ## Generate circular plot using ggplot =======================================
   output$circularplot <- renderUI({
-    if (node_id() %in% colnames(CosMatrix())) {
       div(plotOutput("circular",
         width = "100%",
         height = "700px"
       ), align = "center")
-    } else {
-      h3("Not interested node.")
-    }
   })
 
   output$circular <- renderPlot({
@@ -430,7 +444,8 @@ server <- function(input, output, session) {
   ##################  addButton   ##############################################
   
   observeEvent(node_id(), {
-    if ((node_id() %in% interested) & (!node_id() %in% selected_nodes())){
+    print("addbutton")
+    if ((!node_id() %in% selected_nodes())){
     output$ui_addbutton <- renderUI({
       div(actionButton("addButton", "Add to candidates", 
                        class = "btn-primary active", width = "157px"),
@@ -443,10 +458,8 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$addButton, {
-      AddToCandidate(
-        input$df_table_rows_selected, selected_nodes(),
-        node_id(), CosMatrix(), session, dict.combine
-      )
+    updateCheckboxCandidate(c(selected_nodes(), node_id()),
+                            CosMatrix, session, dict.combine)
   })
 
   output$downloadData <- WriteData(selected_nodes(), draw.data())
@@ -454,19 +467,13 @@ server <- function(input, output, session) {
   #################  more info button  #########################################
   
   observeEvent(node_id(), {
+    print("infobutton")
     cap <- dict.combine$Capinfo[dict.combine$Variable == node_id()]
-    if (cap == "CCS") {
-      href = "https://hcup-us.ahrq.gov/toolssoftware/ccs_svcsproc/ccssvcproc.jsp"
-    }
-    if (cap == "Lab") {
-      href = "https://loinc.org/multiaxial-hierarchy/"
-    }
-    if (cap == "PheCode") {
-      href = "https://phewascatalog.org/phecodes_icd10cm"
-    }
-    if (cap == "RXNORM") {
-      href = "https://mor.nlm.nih.gov/RxNav/"
-    }
+    href = switch(list(CCS = 1, Lab = 2, PheCode = 3, RXNORM = 4)[[cap]], 
+                  "https://hcup-us.ahrq.gov/toolssoftware/ccs_svcsproc/ccssvcproc.jsp",
+                  "https://loinc.org/multiaxial-hierarchy/",
+                  "https://phewascatalog.org/phecodes_icd10cm",
+                  "https://mor.nlm.nih.gov/RxNav/")
     output$ui_moreinfo <- renderUI({
       div(actionButton("infoButton",
                        class = "btn-primary active", width = "157px",
@@ -481,6 +488,7 @@ server <- function(input, output, session) {
   ####################  PheCode  add ICD info  #################################
 
   observeEvent(node_id(), {
+    print("phecode")
     if (node_id() %in% phecode$Phecode) {
       phe_id <- gsub(".+:", "", node_id(), perl = TRUE)
       href <- paste0("http://app.parse-health.org/phecode-map/?phecode=", phe_id)
@@ -497,66 +505,22 @@ server <- function(input, output, session) {
     }
   })
   
+  ###################  more tab   ##############################################
   
-  ####################  plot of clicked node   #################################
-  
-  output$clicked_node_plot <- renderUI({
-    if((node_id() %in% interested)){
-      div(
-      hr(),
-      tabsetPanel(
-        id = "hidden_tabs",
-        tabPanel(
-          title = "Circular plot",
-          br(),
-          h5("*Bar height reflects cosine similarity"),
-          uiOutput("circularplot")
-        ),
-        tabPanel(
-          title = "Sunburst plot",
-          br(),
-          fluidRow(
-            column(
-              6,
-              sliderTextInput("changeline", "max Text length on each line (set as 99 if not breaking lines:)",
-                              choices = c(5, 10, 15, 20, 25, 99), selected = 10, grid = TRUE, width = "100%"
-              ),
-              pickerInput(
-                inputId = "rotatelabel",
-                label = "The orientation of text inside sectors",
-                choices = c("Radial", "Tangential")
-              )
-            ),
-            column(6, sliderInput("scale_sungh", "Graph height:",
-                                  min = 500, max = 1000, value = 750, width = "100%"
-            ))
-          ),
-          div(uiOutput("sun_ui"), align = "center")
-        ),
-        tabPanel(
-          title = "Drugs information",
-          br(),
-          uiOutput("ui_drugs")
-        )
-      )
-      )
-    } else if (node_id() %in% full_drug$feature_id) {
-      div(
-        hr(),
-        tabsetPanel(
-          id = "hidden_tabs",
-          tabPanel(
-            title = "Drugs information",
-            br(),
-            uiOutput("ui_drugs")
-          )
-        )
-      )
+  observeEvent(node_id(), {
+    print("hidetab")
+    if (node_id() %in% full_drug$feature_id) {
+      showTab(inputId = "hidden_tabs", target = "Drugs information")
     } else {
-      ""
+      hideTab(inputId = "hidden_tabs", target = "Drugs information")
+    }
+    if (node_id() %in% LabMap_0917$LOINC) {
+      showTab(inputId = "hidden_tabs", target = "Lab information")
+    } else {
+      hideTab(inputId = "hidden_tabs", target = "Lab information")
     }
   })
-  
+
   
   ####################  RxNorm  add drug info  #################################
 
@@ -572,7 +536,7 @@ server <- function(input, output, session) {
       drugs <- drugs[!duplicated(drugs), ]
     },
       groupBy = "Code",
-    pagination = FALSE, height = 500, rownames = FALSE
+    pagination = FALSE, height = maxHeight() - 450, rownames = FALSE
     )
   })
 
@@ -580,18 +544,39 @@ server <- function(input, output, session) {
     reactableOutput("reac_tb")
   })
 
-  observeEvent(input$hidden_tabs, {
-    if (node_id() %in% full_drug$feature_id) {
-      showTab(inputId = "hidden_tabs", target = "Drugs information")
-    } else {
-      hideTab(inputId = "hidden_tabs", target = "Drugs information")
-    }
+  ############ lab info  #######################################################
+  
+  output$ui_lab <- renderUI({
+    lab_info <- sort(LabMap_0917$LabChemTestName[LabMap_0917$LOINC == node_id()])
+    h_lab <- maxHeight() - 450
+    div(
+      tags$b("LabChemTestName:", style = "padding-left: 5px;"),
+      div(
+        tags$ul(
+          lapply(
+            lab_info,
+            function(x){
+              tags$li(
+                x
+              )
+            }
+          )
+        ), style = paste0("height: ", h_lab - 35, "px;
+                          overflow: auto;
+                          background: #fff;
+                          margin-top: 5px;")
+      ), style = paste0("height: ", h_lab, "px;
+                         box-shadow: #868585 0px 0px 5px;
+                         background: #EEEEEE;
+                         padding: 5px;")
+    )
   })
   
   
   ############  controls for network  ##########################################
 
   observe({
+    print("controls")
     if (length(selected_nodes()) != 0) {
       x <- dict.combine$Description_s[match(
         selected_nodes()[1:min(50, length(selected_nodes()))],

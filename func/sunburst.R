@@ -92,15 +92,19 @@ sunburstPlot <- function(thr_cos,
   
   node_name = dict.combine$Description[match(node_id,dict.combine$Variable)]
   
-  node_loc = match(node_id, colnames(CosMatrix))
-  if(!is.na(node_loc)){
+  # node_loc = match(node_id, colnames(CosMatrix))
+  # if(!is.na(node_loc)){
     if(length(node_name)>0 & !is.na(node_name)){
       
-      data = CosMatrix[, node_loc, drop = FALSE]
+      # data = CosMatrix[, node_loc, drop = FALSE]
       
-      summ <- summary(data)
-      rhd <- data.frame(id = rownames(data)[summ$i],
-                        corvalue = summ$x)
+      to = getNeighbors(node_id, CosMatrix)
+      data = switch((node_id %in% colnames(CosMatrix)) + 1,   
+                    CosMatrix[node_id, to, drop = TRUE], 
+                    CosMatrix[to, node_id, drop = TRUE])
+      
+      rhd <- data.frame(id = names(data),
+                        corvalue = data)
       
       rhd <- rhd[rhd$corvalue > thr_cos, ]
       
@@ -154,9 +158,9 @@ sunburstPlot <- function(thr_cos,
           plotly::layout(title = "After filtering, no connected node is left!")
       }
     }
-  }else{
-    plotly::plot_ly(data = data.frame(ids=c(),labels=c(),parents=c(),text=c(),
-                                      values=c()),type='sunburst')%>%
-      plotly::layout(title = "The node you click is not on the interested list!")
-  }
+  # }else{
+  #   plotly::plot_ly(data = data.frame(ids=c(),labels=c(),parents=c(),text=c(),
+  #                                     values=c()),type='sunburst')%>%
+  #     plotly::layout(title = "The node you click is not on the interested list!")
+  # }
 }
