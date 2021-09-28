@@ -200,6 +200,7 @@ ui <- function(request) {
           )
         )
       ),
+      uiOutput("ui_selectedcluster"),
       bsModal(
         id = "instruction", title = "Instruction", trigger = "instruct",
         size = "large",
@@ -258,7 +259,16 @@ server <- function(input, output, session) {
     }, ignoreNULL = FALSE
   )
   
-  node_id <- reactive({ input$current_node_id$nodes[[1]] })
+  node_id <- reactive({ 
+    if (is.character(input$current_node_id$nodes[[1]])){
+      if(strsplit(input$current_node_id$nodes[[1]], ":", fixed = TRUE)[[1]][1] == "cluster"){
+        NULL
+      }
+      else {
+        input$current_node_id$nodes[[1]] 
+      }
+    }
+    })
 
   CosMatrix <- reactive({ cos.list[[method()]] })
 
@@ -373,16 +383,54 @@ server <- function(input, output, session) {
   
   ##################### info for clicked node   ################################
   
-  observeEvent(node_id(), {
+  observeEvent(input$current_node_id$nodes[[1]], {
+    if(strsplit(input$current_node_id$nodes[[1]], ":", fixed = TRUE)[[1]][1] == "cluster"){
+      toggleModal(session, "selectedcluster", toggle = "open")
+    } else {
       toggleModal(session, "selectednode", toggle = "open")
+    }
   })
   
   output$clicked_node_info <- renderUI({
     clickedNodeText(node_id(), CosMatrix(), dict.combine)
   })
+  
+  
+  #################### info for clicked group   ################################
+  
+  selected_group <- reactive({
+    if (!is.null(input$current_node_id$nodes[[1]])){
+      selected_group <- strsplit(input$current_node_id$nodes[[1]], ":", fixed = TRUE)[[1]][2]
+    }
+  })
+  
+  output$ui_selectedcluster <- renderUI({
+      bsModal(
+        id = "selectedcluster", title = paste("Group: ", selected_group()), 
+        trigger = FALSE,
+        size = "large",
+        uiOutput("clusterinfor")
+      )
+  })
+  
+  output$clusterinfor <- renderUI({
+      reactableOutput("tb_selectedgroup")
+  })
+  
+  output$tb_selectedgroup <- renderReactable({
+    df_nodes <- draw.data()[[2]]
+    df_cluster <- df_nodes[df_nodes$group == selected_group(), c("id", "label", "title")]
+    reactable(df_cluster[, 1:2], height = 700,
+              details = function(index) {
+                title <- df_cluster[index, "title", drop = FALSE]
+                datatable(title, escape = FALSE, rownames = FALSE, 
+                          options = list(dom = "t", ordering = FALSE), 
+                          width = "100%", height = "200px")
+              })
+  })
 
   
-  ########################  plots for clicked nodes   ###########################
+  ########################  plots for clicked nodes   ##########################
   
   ## Generate sunburst plot using plotly =======================================
   output$sun_ui <- renderUI({
