@@ -167,3 +167,12 @@ button#goButton {
   padding-left: 20px;
   padding-right: 20px;
 }
+
+
+#legendnetwork_proxy_nodes{
+    border: white;
+    border-color: white;
+    border-width: 3px;
+    /* background: white; */
+    border-style: outset;
+}
