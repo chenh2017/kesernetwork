@@ -29,6 +29,7 @@ options(stringsAsFactors = FALSE)
 
 #  ui ---------------------------
 ui <- function(request) {
+  tagList(
   dashboardPage(
     dashboardHeader(
       title = "KESER Network",
@@ -206,8 +207,34 @@ ui <- function(request) {
         size = "large",
         includeMarkdown("www/documentation.md")
       )
-    )
-  )
+    )#,
+    # footer = dashboardFooter(
+    #   left = "By Divad Nojnarg",
+    #   right = "Zurich, 2019"
+    # )
+  ),#end dashboardPage
+  tags$footer(div(
+    "Teams: ",
+    tags$a(href = "https://celehs.hms.harvard.edu/", target = "_blank",
+           tags$img(src = "celehs_logo_40.png", 
+                    title="CELEHS", height="40", 
+                    class = "footer-logo")),
+    tags$a(href = "https://www.verityresearch.org/", target = "_blank",
+           tags$img(src = "VERITY_40.png", 
+                    title="VERITY (BWH)", height="40", 
+                    class = "footer-logo")),
+    tags$a(href = "https://www.va.gov/", target = "_blank",
+           tags$img(src = "https://s3-us-gov-west-1.amazonaws.com/content.www.va.gov/img/header-logo.png", 
+                    title="VA", height="40", 
+                    class = "footer-logo")),
+    tags$a(href = "https://parse-health.org/", target = "_blank",
+           tags$img(src = "parse_40.png", 
+                    title="PARSE health", 
+                    class = "footer-logo"))
+  
+  ), align = "center", class = "footer-bar")
+  
+  )#end tagList
 }
 
 
@@ -349,7 +376,7 @@ server <- function(input, output, session) {
       print("network2")
       shinycssloaders::withSpinner(
         visNetworkOutput("network_proxy_nodes",
-                         height = paste0(max(input$slider_h, (maxHeight()) - 50), "px")
+                         height = paste0(max(input$slider_h, (maxHeight()) - 65), "px")
         ),
         type = 6
       )
@@ -492,7 +519,6 @@ server <- function(input, output, session) {
   ##################  addButton   ##############################################
   
   observeEvent(node_id(), {
-    print("addbutton")
     if ((!node_id() %in% selected_nodes())){
     output$ui_addbutton <- renderUI({
       div(actionButton("addButton", "Add to candidates", 

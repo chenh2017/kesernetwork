@@ -176,3 +176,47 @@ button#goButton {
     /* background: white; */
     border-style: outset;
 }
+
+
+
+
+
+
+
+
+
+
+.footer-bar{
+  /*position:absolute;*/
+  bottom:0;
+  width:100%;
+  /*height:50px; */  /* Height of the footer */
+  color: white;
+  padding: 60px 40px;
+  background: #101820;
+  z-index: 1000;
+  
+}
+
+.footer-bar > a:hover { 
+  color:rgba(255,255,255,0.80); 
+  text-decoration:none; 
+}
+
+.footer-bs .footer-nav h4 {
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 3px;
+	margin-bottom:10px;
+}
+
+.footer-bs .footer-nav ul.list { list-style:none; padding:0px; }
+.footer-bs .footer-nav ul.list li { padding:5px 0px;}
+.footer-bs .footer-nav ul.list a { color:rgba(255,255,255,0.80); }
+.footer-bs .footer-nav ul.list a:hover { color:rgba(255,255,255,0.60); text-decoration:none; }
+
+.footer-logo{
+  height: 40px;
+  margin-left: 100px;
+  
+}
