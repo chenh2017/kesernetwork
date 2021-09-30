@@ -250,6 +250,10 @@ ui <- function(request) {
   ),#end dashboardPage
   tags$footer(div(
     "Teams: ",
+    tags$a(href = "https://www.va.gov/", target = "_blank",
+           tags$img(src = "https://s3-us-gov-west-1.amazonaws.com/content.www.va.gov/img/header-logo.png", 
+                    title="VA", height="40", 
+                    class = "footer-logo")),
     tags$a(href = "https://celehs.hms.harvard.edu/", target = "_blank",
            tags$img(src = "celehs_logo_40.png", 
                     title="CELEHS", height="40", 
@@ -257,10 +261,6 @@ ui <- function(request) {
     tags$a(href = "https://www.verityresearch.org/", target = "_blank",
            tags$img(src = "VERITY_40.png", 
                     title="VERITY (BWH)", height="40", 
-                    class = "footer-logo")),
-    tags$a(href = "https://www.va.gov/", target = "_blank",
-           tags$img(src = "https://s3-us-gov-west-1.amazonaws.com/content.www.va.gov/img/header-logo.png", 
-                    title="VA", height="40", 
                     class = "footer-logo")),
     tags$a(href = "https://parse-health.org/", target = "_blank",
            tags$img(src = "parse_40.png", 
@@ -343,10 +343,15 @@ server <- function(input, output, session) {
   ###############  DT input table   ############################################
   
   df_input <- reactive({
-    data.frame(
+    ord <- gsub("\\:.+", "", rownames(CosMatrix()), perl = TRUE)
+    ord <- factor(ord, levels = c("PheCode", "RXNORM", "CCS", "LOINC", "ShortName", "Other lab"))
+    df <- data.frame(
       "nodeID" = rownames(CosMatrix()),
-      "Description" = str_wrap(dict.combine$Description[match(rownames(CosMatrix()), dict.combine$Variable)], width = 20)
+      "Description" = str_wrap(dict.combine$Description[match(rownames(CosMatrix()), dict.combine$Variable)], width = 20),
+      "type" = ord,
+      "id" = gsub(".+\\:", "", rownames(CosMatrix()), perl = TRUE)
     )
+    df[with(df, order(type, id)), ]
   })
 
   output$ui_table <- renderUI({
