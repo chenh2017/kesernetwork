@@ -185,7 +185,7 @@ plot_network <- function(s, cluster, draw.data, hide_label, CosMatrix, dict.comb
                   useGroups = FALSE,
                   zoom = TRUE,
                   stepX = 150,
-                  stepY = 60,
+                  stepY = 70,
                   ncol=1)
         # layout = ifelse(length(selected_nodes) >= 19, "layout_with_mds", "layout_nicely")
       add_attr_network(p, layout)

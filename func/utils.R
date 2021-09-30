@@ -24,7 +24,7 @@ updateCheckboxCandidate <- function(x, CosMatrix, session, dict.combine){
     x <- x.name <- x.neighbor <- character(0)
   }
   updateCheckboxGroupInput(session, "inCheckboxGroup2",
-                           label = paste(length(x), " candidate nodes:"),
+                           label = paste(length(x), " nodes selected:"),
                            choiceValues = x,
                            choiceNames = x.neighbor,
                            selected = x
