@@ -17,6 +17,7 @@ library(shinydashboardPlus)
 library(shinyWidgets)
 library(stringr)
 library(visNetwork)
+library(shinyhelper)
 
 
 load("../data/kesernetwork.RData")
@@ -42,13 +43,23 @@ ui <- function(request) {
           status = "primary",
           circle = FALSE,
           selectInput("network_layout", "The layout of network",
-            choices = c("layout_nicely", "layout_with_mds", "layout_with_graphopt", "layout_with_lgl"), selected = "layout_nicely"
-          ),
+            choices = c("layout_nicely", "layout_with_mds", "layout_with_lgl"), selected = "layout_nicely"
+          ) %>% 
+            helper(type = "markdown",
+                   title = "The layout of network",
+                   content = "layout",
+                   size = "m"),
           selectInput("Focus",
-            label = "Focus on node:",
+            label = "Choose one node to focus on:",
             choices = "All", width = "100%"
-          ),
-          sliderInput("scale_id", "Focus scale:", min = 1, max = 10, value = 5, width = "100%"),
+          ) %>% 
+            helper(type = "inline",
+                   title = "Focus on node",
+                   content = c("Select a center node to focus on.",
+                               "The view will lock onto that node."),
+                   size = "s"),
+          sliderInput("scale_id", "Focus scale (zoomlevel):", width = "100%", 
+                      min = 1, max = 10, value = 5),
           sliderInput("slider_h", "Graph height:",
             min = 100, max = 1500, value = 750, width = "100%"
           )
@@ -97,11 +108,24 @@ ui <- function(request) {
                       ),
                       selected = "VA_integrative",
                       width = "100%"
-      ), id = "divselectmethod"),
-      hr(style = "color: lightgrey;"),
+      ) %>% 
+        helper(type = "markdown",
+               colour = "white",
+               title = "The method",
+               content = "method",
+               size = "m",
+               style = "margin-right: 5px;"),
+      id = "divselectmethod"),
+      hr() %>% 
+        helper(type = "markdown",
+               colour = "white",
+               title = "The input table",
+               content = "input_table",
+               size = "m",
+               style = "margin-right: 5px;"),
       uiOutput("ui_table"),
       div(
-        checkboxGroupInput("inCheckboxGroup2", "5 candidate nodes:",
+        checkboxGroupInput("inCheckboxGroup2", "5 nodes selected:",
           choiceValues = c("PheCode:008.5", "PheCode:008.7", "PheCode:008",
                            "PheCode:010", "PheCode:031"),
           choiceNames = c(
@@ -121,7 +145,14 @@ ui <- function(request) {
         column(
           6,
           div(
-            checkboxInput("cluster", "Cluster by groups", value = FALSE),
+            checkboxInput("cluster", "Cluster by groups", value = FALSE) %>% 
+              helper(type = "inline",
+                     colour = "white",
+                     title = "Cluster by groups",
+                     content = c("If checked, the nodes with same group will be collasped into database-shaped nodes.",
+                                 "<b>Click</b> node to view groups informations.",
+                                 "<b>Double-click</b> node to expand/re-collapse groups."),
+                     size = "m"),
             checkboxInput("hide_labels", "Hide the labels", value = TRUE),
             id = "div_checkbox"
           )
@@ -199,7 +230,11 @@ ui <- function(request) {
             br(),
             uiOutput("ui_lab")
           )
-        )
+        ) %>% 
+          helper(type = "markdown",
+                 title = "The plots and tables",
+                 content = "tabs_nodeinfo",
+                 size = "m")
       ),
       uiOutput("ui_selectedcluster"),
       bsModal(
@@ -257,6 +292,8 @@ server <- function(input, output, session) {
       )
     )
   })
+  
+  observe_helpers(help_dir = "helper_mds")
   
   
   ####################  input   #################################################
@@ -358,22 +395,22 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$goButton, {
-    print("gobutton1")
+    # print("gobutton1")
     if (length(selected_nodes()) >= 10) {
       showNotification(paste("You've chosen ", length(selected_nodes()), 
                              " nodes. It will take a while to finish plotting..."),
         duration = 3, type = "message"
       )
     }
-    print("gobutton2")
+    # print("gobutton2")
   })
   
   ######################  network  #############################################
   
   output$network <- renderUI({
-    print("network1")
+    # print("network1")
     if (length(selected_nodes()) > 0) {
-      print("network2")
+      # print("network2")
       shinycssloaders::withSpinner(
         visNetworkOutput("network_proxy_nodes",
                          height = paste0(max(input$slider_h, (maxHeight()) - 65), "px")
@@ -392,7 +429,7 @@ server <- function(input, output, session) {
   })
 
   draw.data <- eventReactive(selected_nodes(), {
-    print("draw.data1")
+    # print("draw.data1")
     if (length(selected_nodes()) != 0) {
       input.correct <- selected_nodes()[1:min(50, length(selected_nodes()))]
       # root.node <- match(input.correct, rownames(CosMatrix()))
@@ -403,7 +440,7 @@ server <- function(input, output, session) {
   })
   
   output$network_proxy_nodes <- renderVisNetwork({
-    print("draw_data1")
+    # print("draw_data1")
     plot_network(selected_nodes(), cluster(), draw.data(), hide_labels(), 
                  CosMatrix(), dict.combine, attrs, input$network_layout)
   })
@@ -447,7 +484,8 @@ server <- function(input, output, session) {
   output$tb_selectedgroup <- renderReactable({
     df_nodes <- draw.data()[[2]]
     df_cluster <- df_nodes[df_nodes$group == selected_group(), c("id", "label", "title")]
-    reactable(df_cluster[, 1:2], height = 700,
+    reactable(df_cluster[, 1:2], 
+              # height = 700,
               details = function(index) {
                 title <- df_cluster[index, "title", drop = FALSE]
                 datatable(title, escape = FALSE, rownames = FALSE, 
@@ -541,7 +579,7 @@ server <- function(input, output, session) {
   #################  more info button  #########################################
   
   observeEvent(node_id(), {
-    print("infobutton")
+    # print("infobutton")
     cap <- dict.combine$Capinfo[dict.combine$Variable == node_id()]
     href = switch(list(CCS = 1, Lab = 2, PheCode = 3, RXNORM = 4)[[cap]], 
                   "https://hcup-us.ahrq.gov/toolssoftware/ccs_svcsproc/ccssvcproc.jsp",
@@ -562,7 +600,7 @@ server <- function(input, output, session) {
   ####################  PheCode  add ICD info  #################################
 
   observeEvent(node_id(), {
-    print("phecode")
+    # print("phecode")
     if (node_id() %in% phecode$Phecode) {
       phe_id <- gsub(".+:", "", node_id(), perl = TRUE)
       href <- paste0("http://app.parse-health.org/phecode-map/?phecode=", phe_id)
@@ -582,7 +620,7 @@ server <- function(input, output, session) {
   ###################  more tab   ##############################################
   
   observeEvent(node_id(), {
-    print("hidetab")
+    # print("hidetab")
     if (node_id() %in% full_drug$feature_id) {
       showTab(inputId = "hidden_tabs", target = "Drugs information")
     } else {
@@ -650,7 +688,7 @@ server <- function(input, output, session) {
   ############  controls for network  ##########################################
 
   observe({
-    print("controls")
+    # print("controls")
     if (length(selected_nodes()) != 0) {
       x <- dict.combine$Description_s[match(
         selected_nodes()[1:min(50, length(selected_nodes()))],
