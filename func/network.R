@@ -51,16 +51,31 @@ dataNetwork <- function(selected_nodes, CosMatrix, dict.combine, attrs){
   df_nodes$title = paste0("<b>ID: </b>",df_nodes$id,
                           "<br><b>Description: </b>",dict.combine$Description[match(df_nodes$id,dict.combine$Variable)],
                           "<br><b>Group: </b>", df_nodes$group_title)
-  if(!is.na(dict.combine$marginal_pat_VA[match(df_nodes$id,dict.combine$Variable)])){
-    df_nodes$title = paste0(df_nodes$title,
-                            "<br><b>Patient prevalence: </b>", round(dict.combine$marginal_pat_VA[match(df_nodes$id,dict.combine$Variable)]/12600000,4))
-  }
-  if(!is.na(dict.combine$marginal_freq_VA[match(df_nodes$id,dict.combine$Variable)]/
-            dict.combine$marginal_pat_VA[match(df_nodes$id,dict.combine$Variable)])){
-    df_nodes$title = paste0(df_nodes$title,
-    "<br><b>Ave count per patient: </b>", round(dict.combine$marginal_freq_VA[match(df_nodes$id,dict.combine$Variable)]/
-                                                  dict.combine$marginal_pat_VA[match(df_nodes$id,dict.combine$Variable)],2))
-  }
+  text_freq = sapply(df_nodes$id, function(x){
+    if(!is.na(dict.combine$marginal_pat_VA[match(x,dict.combine$Variable)])){
+      paste0("<br><b>Patient prevalence: </b>", round(dict.combine$marginal_pat_VA[match(x,dict.combine$Variable)]/12600000,4),
+             "<br><b>Ave count per patient: </b>", round(dict.combine$marginal_freq_VA[match(x,dict.combine$Variable)]/
+                                                           dict.combine$marginal_pat_VA[match(x,dict.combine$Variable)],2))
+      
+    } else {
+      ""
+    }
+  })
+  
+  df_nodes$title = paste0(df_nodes$title,
+                          text_freq
+  )
+  
+  # if(!is.na(dict.combine$marginal_pat_VA[match(df_nodes$id,dict.combine$Variable)])){
+  #   df_nodes$title = paste0(df_nodes$title,
+  #                           "<br><b>Patient prevalence: </b>", round(dict.combine$marginal_pat_VA[match(df_nodes$id,dict.combine$Variable)]/12600000,4))
+  # }
+  # if(!is.na(dict.combine$marginal_freq_VA[match(df_nodes$id,dict.combine$Variable)]/
+  #           dict.combine$marginal_pat_VA[match(df_nodes$id,dict.combine$Variable)])){
+  #   df_nodes$title = paste0(df_nodes$title,
+  #   "<br><b>Ave count per patient: </b>", round(dict.combine$marginal_freq_VA[match(df_nodes$id,dict.combine$Variable)]/
+  #                                                 dict.combine$marginal_pat_VA[match(df_nodes$id,dict.combine$Variable)],2))
+  # }
 
   df_nodes$font.background[is.na(df_nodes$font.background)] <- ""
 
