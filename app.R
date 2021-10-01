@@ -25,7 +25,6 @@ source("func/utils.R")
 source("func/network.R")
 source("func/sunburst.R")
 source("func/circularStatic.R")
-source("func/circularInteractive.R")
 options(stringsAsFactors = FALSE)
 
 #  ui ---------------------------
