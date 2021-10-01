@@ -347,6 +347,8 @@ server <- function(input, output, session) {
       "type" = ord,
       "id" = gsub(".+\\:", "", rownames(CosMatrix()), perl = TRUE)
     )
+    df$istarget = "others"
+    df$istarget[df$nodeID %in% colnames(CosMatrix())] <- "target"
     df[with(df, order(type, id)), ]
   })
 
@@ -357,7 +359,7 @@ server <- function(input, output, session) {
   })
 
   output$df_table <- renderDT(datatable({
-        df_input()[, 1:2]
+        df_input()[, c(1:2, 5)]
       }, rownames = FALSE,
       extensions = c("Buttons", "Select"),
       options = list(
@@ -376,6 +378,10 @@ server <- function(input, output, session) {
     formatStyle(
       columns = colnames(df_input),
       backgroundColor = "#222d32", color = "white"
+    ) %>% formatStyle(
+      'istarget',
+      target = 'row',
+      backgroundColor = styleEqual(c('target', "others"), c('#D5F5E3', 'lightgray'))
     ), server = FALSE)
   
   ##############  sidebar ######################################################
