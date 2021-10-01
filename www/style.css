@@ -218,5 +218,14 @@ button#goButton {
 .footer-logo{
   height: 40px;
   margin-left: 100px;
-  
 }
+
+.footer-text{
+  margin-left: 10px;
+  color: lightgrey;
+}
+
+.footer-text > b: hover{
+  color: white;
+}
+
