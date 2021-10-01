@@ -22,12 +22,6 @@ clickedNodeText <- function(node_id, edge_matrix, dict.combine){
 
   HTML(
     title
-    # paste0("<h3>",node_id, " </h3>",
-    #        "<b>Description: </b>",dict.combine$Description[match(node_id,dict.combine$Variable)],
-    #        "<br><b>Group: </b>", dict.combine$Capinfo[match(node_id,dict.combine$Variable)],
-    #        "<br><b>Patient prevalence: </b>", round(dict.combine$marginal_pat_VA[match(node_id,dict.combine$Variable)]/12600000,4),
-    #        "<br><b>Ave count per patient: </b>", round(dict.combine$marginal_freq_VA[match(node_id,dict.combine$Variable)]/
-    #                                                      dict.combine$marginal_pat_VA[match(node_id,dict.combine$Variable)],2))
   )
 }
 

@@ -1,10 +1,7 @@
 
 ## Generate sunburst plot using plotly =======================================
 sunburstDF <- function(DF, valueCol = NULL, root.name = "Root"){
-  
-  # root.name <- node_id
-  # valueCol <- "corvalue"
-  
+
   colNamesDF <- names(DF)
   
   if(data.table::is.data.table(DF)){
@@ -33,7 +30,7 @@ sunburstDF <- function(DF, valueCol = NULL, root.name = "Root"){
     } else {
       currentDT <- DT[, lapply(.SD, sum, na.rm = TRUE), by=currentCols, .SDcols = "values"]
     }
-    #currentDT = stats::na.omit(currentDT)
+    
     data.table::setnames(currentDT, length(currentCols), "labels")
     hierarchyList[[i]] <- currentDT
   }
@@ -47,10 +44,7 @@ sunburstDF <- function(DF, valueCol = NULL, root.name = "Root"){
   return(hierarchyDT)
 }
 sunburstPreData <- function(df, changeline){
-  
-  # df <- hierarchyDT
-  # changeline <- 10
-  
+
   df = df[!is.na(df$labels), ]
   df$labels = stringr::str_replace(df$labels, "^.*_Codified","Codified")
   df$labels = stringr::str_replace(df$labels, "^.*_NLP","NLP")
@@ -84,83 +78,66 @@ sunburstPlot <- function(thr_cos,
                            changeline,rotatelabel,scale_sungh,
                            node_id, CosMatrix, 
                            dict.combine, cap_color){
-  
-  # node_id <- "PheCode:008.5"
-  # CosMatrix <- cos.list[[1]]
-  # thr_cos <- 0.01
-  # scale_sungh <- 750
-  
+
   node_name = dict.combine$Description[match(node_id,dict.combine$Variable)]
   
-  # node_loc = match(node_id, colnames(CosMatrix))
-  # if(!is.na(node_loc)){
-    if(length(node_name)>0 & !is.na(node_name)){
+  if(length(node_name)>0 & !is.na(node_name)){
+    
+    to = getNeighbors(node_id, CosMatrix)
+    data = switch((node_id %in% colnames(CosMatrix)) + 1,   
+                  CosMatrix[node_id, to, drop = TRUE], 
+                  CosMatrix[to, node_id, drop = TRUE])
+    
+    rhd <- data.frame(id = names(data),
+                      corvalue = data)
+    
+    rhd <- rhd[rhd$corvalue > thr_cos, ]
+    
+    rhd <- left_join(rhd, dict.combine[, c("Variable","Capinfo","index01","index1","index2","index3","index4")],
+                     by = c("id" = "Variable"))
+    
+    if(nrow(rhd)>0){
+      rhd = rhd[order(rhd$index01,rhd$index1,rhd$index2,
+                      rhd$index3,rhd$index4,rhd$corvalue),]
+      DF = rhd[,-c(1,3)]
+      df = sunburstDF(DF,valueCol = "corvalue",root.name = node_name)
+      df = sunburstPreData(df, changeline)
       
-      # data = CosMatrix[, node_loc, drop = FALSE]
+      df$parents2 = sapply(df$ids, function(x)(strsplit(x, " - ", fixed = T)[[1]][2]))
       
-      to = getNeighbors(node_id, CosMatrix)
-      data = switch((node_id %in% colnames(CosMatrix)) + 1,   
-                    CosMatrix[node_id, to, drop = TRUE], 
-                    CosMatrix[to, node_id, drop = TRUE])
+      df = left_join(df, cap_color[, c(3,2)], by = c("parents2" = "index01"))
+      df$color[is.na(df$color)] <- "white"
       
-      rhd <- data.frame(id = names(data),
-                        corvalue = data)
-      
-      rhd <- rhd[rhd$corvalue > thr_cos, ]
-      
-      rhd <- left_join(rhd, dict.combine[, c("Variable","Capinfo","index01","index1","index2","index3","index4")],
-                       by = c("id" = "Variable"))
-      
-      if(nrow(rhd)>0){
-        rhd = rhd[order(rhd$index01,rhd$index1,rhd$index2,
-                        rhd$index3,rhd$index4,rhd$corvalue),]
-        DF = rhd[,-c(1,3)]
-        df = sunburstDF(DF,valueCol = "corvalue",root.name = node_name)
-        df = sunburstPreData(df, changeline)
-        
-        df$parents2 = sapply(df$ids, function(x)(strsplit(x, " - ", fixed = T)[[1]][2]))
-        
-        
-        # df.color <- data.frame(index01 = c("Disease", "Drug", "Lab", "Procedure"),
-        #                        color = c("#1F78B4", "#33A02C", "#FF7F00", "#E31A1C"))
-        df = left_join(df, cap_color[, c(3,2)], by = c("parents2" = "index01"))
-        df$color[is.na(df$color)] <- "white"
-        
-        print(nrow(df))
+      print(nrow(df))
 
-        m <- list(
-          l = 0,r = 0,b = 0,t = 0,pad = 0
-        )
-        
-        if(rotatelabel=="Radial"){
-          plotly::plot_ly(data = df, ids = ~ids, labels= ~labels, parents = ~parents, 
-                          text = ~text, values= ~values, type='sunburst', branchvalues = 'total',
-                          hoverinfo = "label", textinfo = "text", textfont = list(color="black"),
-                          insidetextorientation='radial',
-                          width = scale_sungh,
-                          marker = list(colors = df$color),
-                          height =  scale_sungh)%>%
-            plotly::layout(autosize = F, margin = m)
-        }else{
-          plotly::plot_ly(data = df, ids = ~ids, labels= ~labels, parents = ~parents, 
-                          text = ~text, values= ~values, type='sunburst', branchvalues = 'total',
-                          hoverinfo = "label", textinfo = "text", textfont = list(color="black"),
-                          insidetextorientation='"tangential"',
-                          width = scale_sungh,
-                          marker = list(colors = df$color),
-                          height =  scale_sungh)%>%
-            plotly::layout(autosize = F, margin = m)
-        }
-        
+      m <- list(
+        l = 0,r = 0,b = 0,t = 0,pad = 0
+      )
+      
+      if(rotatelabel=="Radial"){
+        plotly::plot_ly(data = df, ids = ~ids, labels= ~labels, parents = ~parents, 
+                        text = ~text, values= ~values, type='sunburst', branchvalues = 'total',
+                        hoverinfo = "label", textinfo = "text", textfont = list(color="black"),
+                        insidetextorientation='radial',
+                        width = scale_sungh,
+                        marker = list(colors = df$color),
+                        height =  scale_sungh)%>%
+          plotly::layout(autosize = F, margin = m)
       }else{
-        plotly::plot_ly(data = data.frame(ids=c(),labels=c(),parents=c(),text=c(),
-                                          values=c()),type='sunburst')%>%
-          plotly::layout(title = "After filtering, no connected node is left!")
+        plotly::plot_ly(data = df, ids = ~ids, labels= ~labels, parents = ~parents, 
+                        text = ~text, values= ~values, type='sunburst', branchvalues = 'total',
+                        hoverinfo = "label", textinfo = "text", textfont = list(color="black"),
+                        insidetextorientation='"tangential"',
+                        width = scale_sungh,
+                        marker = list(colors = df$color),
+                        height =  scale_sungh)%>%
+          plotly::layout(autosize = F, margin = m)
       }
+      
+    }else{
+      plotly::plot_ly(data = data.frame(ids=c(),labels=c(),parents=c(),text=c(),
+                                        values=c()),type='sunburst')%>%
+        plotly::layout(title = "After filtering, no connected node is left!")
     }
-  # }else{
-  #   plotly::plot_ly(data = data.frame(ids=c(),labels=c(),parents=c(),text=c(),
-  #                                     values=c()),type='sunburst')%>%
-  #     plotly::layout(title = "The node you click is not on the interested list!")
-  # }
+  }
 }

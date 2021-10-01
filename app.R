@@ -243,11 +243,7 @@ ui <- function(request) {
         size = "large",
         includeMarkdown("www/documentation.md")
       )
-    )#,
-    # footer = dashboardFooter(
-    #   left = "By Divad Nojnarg",
-    #   right = "Zurich, 2019"
-    # )
+    )
   ),#end dashboardPage
   tags$footer(div(
     "Teams:",
@@ -263,20 +259,14 @@ ui <- function(request) {
            tags$img(src = "celehs_logo_40.png", 
                     title="CELEHS", height="40", 
                     class = "footer-logo")),
-    # tags$a(href = "https://celehs.hms.harvard.edu/", tags$b("CELEHS"), 
-    #        class = "footer-text"),
     tags$a(href = "https://www.verityresearch.org/", target = "_blank",
            tags$img(src = "VERITY_40.png", 
                     title="VERITY (BWH)", height="40", 
                     class = "footer-logo")),
-    # tags$a(href = "https://www.verityresearch.org/", tags$b("VERITY"), 
-    #        class = "footer-text"),
     tags$a(href = "https://parse-health.org/", target = "_blank",
            tags$img(src = "parse_40.png", 
                     title="PARSE health", 
                     class = "footer-logo")),
-    # tags$a(href = "https://parse-health.org/", tags$b("PARSE health"), 
-    #        class = "footer-text")
   
   ), align = "center", class = "footer-bar")
   
@@ -312,10 +302,6 @@ server <- function(input, output, session) {
   maxHeight <- reactive({shinybrowser::get_height()})
   
   method <- reactive({ input$selectmethod })
-  
-  # selected_rows <- reactive({
-  #   input$df_table_rows_selected
-  # })
   
   selected_rows <- reactive({df_input()$nodeID[input$df_table_rows_selected]})
   
@@ -375,18 +361,15 @@ server <- function(input, output, session) {
         df_input()[, 1:2]
       }, rownames = FALSE,
       extensions = c("Buttons", "Select"),
-      # callback = JS("table.rows([0,2,3,4,5]).select();"),
       options = list(
         paging = FALSE,
         scrollY = "300px",
         scrollCollapse = TRUE,
         dom = "Bfrtip",
         select = list(
-          style = "multiple", items = "row"#,
-          # selector = "td:not(.notselectable)"
+          style = "multiple", items = "row"
         ),
-        buttons = list("selectNone")#,
-        # bInfo = FALSE
+        buttons = list("selectNone")
       ),
       selection = "none",
       escape = FALSE
@@ -411,22 +394,18 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$goButton, {
-    # print("gobutton1")
     if (length(selected_nodes()) >= 10) {
       showNotification(paste("You've chosen ", length(selected_nodes()), 
                              " nodes. It will take a while to finish plotting..."),
         duration = 3, type = "message"
       )
     }
-    # print("gobutton2")
   })
   
   ######################  network  #############################################
   
   output$network <- renderUI({
-    # print("network1")
     if (length(selected_nodes()) > 0) {
-      # print("network2")
       shinycssloaders::withSpinner(
         visNetworkOutput("network_proxy_nodes",
                          height = paste0(max(input$slider_h, (maxHeight()) - 65), "px")
@@ -445,10 +424,8 @@ server <- function(input, output, session) {
   })
 
   draw.data <- eventReactive(selected_nodes(), {
-    # print("draw.data1")
     if (length(selected_nodes()) != 0) {
       input.correct <- selected_nodes()[1:min(50, length(selected_nodes()))]
-      # root.node <- match(input.correct, rownames(CosMatrix()))
       dataNetwork(input.correct, CosMatrix(), dict.combine, attrs)
     } else {
       NA
@@ -456,7 +433,6 @@ server <- function(input, output, session) {
   })
   
   output$network_proxy_nodes <- renderVisNetwork({
-    # print("draw_data1")
     plot_network(selected_nodes(), cluster(), draw.data(), hide_labels(), 
                  CosMatrix(), dict.combine, attrs, input$network_layout)
   })
@@ -501,7 +477,6 @@ server <- function(input, output, session) {
     df_nodes <- draw.data()[[2]]
     df_cluster <- df_nodes[df_nodes$group == selected_group(), c("id", "label", "title")]
     reactable(df_cluster[, 1:2], 
-              # height = 700,
               details = function(index) {
                 title <- df_cluster[index, "title", drop = FALSE]
                 datatable(title, escape = FALSE, rownames = FALSE, 
@@ -534,26 +509,6 @@ server <- function(input, output, session) {
       node_id(), CosMatrix(), dict.combine, attrs$cap_color
     )
   })
-
-
-  #
-  #   ## Generate circular plot using highcharter =======================================
-  #   output$circularplot <- renderUI({
-  #     if (node_id() %in% colnames(CosMatrix())){
-  #       div(highchartOutput("circular_highcharter",
-  #                       width = "100%",
-  #                       height = "700px"), align = "center")
-  #     } else {
-  #       h3("Not interested node.")
-  #     }
-  #   })
-  #
-  #
-  #   output$circular_highcharter <- renderHighchart({
-  #     circularInteractive(0.01, node_id(), CosMatrix(),
-  #                         dict.combine, attrs$cap_color)
-  #   })
-  #
 
   ## Generate circular plot using ggplot =======================================
   output$circularplot <- renderUI({
@@ -595,7 +550,6 @@ server <- function(input, output, session) {
   #################  more info button  #########################################
   
   observeEvent(node_id(), {
-    # print("infobutton")
     cap <- dict.combine$Capinfo[dict.combine$Variable == node_id()]
     href = switch(list(CCS = 1, Lab = 2, PheCode = 3, RXNORM = 4)[[cap]], 
                   "https://hcup-us.ahrq.gov/toolssoftware/ccs_svcsproc/ccssvcproc.jsp",
@@ -616,7 +570,6 @@ server <- function(input, output, session) {
   ####################  PheCode  add ICD info  #################################
 
   observeEvent(node_id(), {
-    # print("phecode")
     if (node_id() %in% phecode$Phecode) {
       phe_id <- gsub(".+:", "", node_id(), perl = TRUE)
       href <- paste0("http://app.parse-health.org/phecode-map/?phecode=", phe_id)
@@ -636,7 +589,6 @@ server <- function(input, output, session) {
   ###################  more tab   ##############################################
   
   observeEvent(node_id(), {
-    # print("hidetab")
     if (node_id() %in% full_drug$feature_id) {
       showTab(inputId = "hidden_tabs", target = "Drugs information")
     } else {
@@ -684,28 +636,9 @@ server <- function(input, output, session) {
   
   output$ui_med_proc <- renderUI({
     if (node_id() %in% med_proc$feature_id){
-      # v_med_proc <- med_proc$Code[med_proc$feature_id == node_id()]
-      # print(v_med_proc)
       div(
         h4("Medication Procedures:"),
         reactableOutput("tb_med_proc")
-      #   div(
-      #     tags$ul(
-      #       lapply(
-      #         v_med_proc,
-      #         function(x){
-      #           tags$li(
-      #             x
-      #           )
-      #         }
-      #       )
-      #     ), style = paste0("max-height: ", maxHeight() - 450 - 35, "px;
-      #                     overflow: auto;
-      #                     background: #fff;
-      #                     margin-top: 5px;")
-      #   ), style = "box-shadow: #868585 0px 0px 5px;
-      #                    background: #EEEEEE;
-      #                    padding: 5px;"
       )
     }
   })
@@ -751,7 +684,6 @@ server <- function(input, output, session) {
   ############  controls for network  ##########################################
 
   observe({
-    # print("controls")
     if (length(selected_nodes()) != 0) {
       x <- dict.combine$Description_s[match(
         selected_nodes()[1:min(50, length(selected_nodes()))],

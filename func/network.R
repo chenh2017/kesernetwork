@@ -3,34 +3,17 @@ dataNetwork <- function(selected_nodes, CosMatrix, dict.combine, attrs){
   attr_edges <- attrs$attr_edges
   attr_nodes_type <- attrs$attr_nodes_type
   attr_nodes_cap <- attrs$attr_nodes_cap
-  
-  
-  
-  # CosMatrix <- cos.list[[1]]
-  # selected_nodes <- c("Other lab:1400569391", "PheCode:558", "PheCode:246", "CCS:10")
-  # root.node <- match(selected_nodes, rownames(CosMatrix))
 
-
-  
-    df_edges <- NULL
-    for (i in selected_nodes){
-      to = getNeighbors(i, CosMatrix)
-      cor = switch((i %in% colnames(CosMatrix)) + 1, 
-                   CosMatrix[i, to, drop = TRUE], 
-                   CosMatrix[to, i, drop = TRUE])
-      df_edges <- rbind(df_edges, data.frame(from = i,
-                                             to = to,
-                                             corvalue = cor))
-    }
-
-
-  # cos.matrix = CosMatrix[root.node, ,drop = FALSE]
-  # rootids = rownames(cos.matrix)
-  # 
-  # summ <- summary(cos.matrix)
-  # df_edges <- data.frame(from = rownames(cos.matrix)[summ$i],
-  #                        to = colnames(cos.matrix)[summ$j],
-  #                        corvalue = summ$x)
+  df_edges <- NULL
+  for (i in selected_nodes){
+    to = getNeighbors(i, CosMatrix)
+    cor = switch((i %in% colnames(CosMatrix)) + 1, 
+                 CosMatrix[i, to, drop = TRUE], 
+                 CosMatrix[to, i, drop = TRUE])
+    df_edges <- rbind(df_edges, data.frame(from = i,
+                                           to = to,
+                                           corvalue = cor))
+  }
   
   df_edges <- df_edges[df_edges$from != df_edges$to, ]
 
@@ -57,25 +40,13 @@ dataNetwork <- function(selected_nodes, CosMatrix, dict.combine, attrs){
   df_nodes$nodetype <- "other"
   df_nodes$nodetype[df_nodes$id %in% selected_nodes] <- "target"
 
-
-
   df_nodes <- left_join(df_nodes, attr_nodes_type, by = "nodetype")
   df_nodes <- left_join(df_nodes, attr_nodes_cap, by = "Cap")
 
   df_nodes$group[df_nodes$id %in% selected_nodes] <- df_nodes$label[df_nodes$id %in% selected_nodes]
-  # df_nodes$Cap_label[df_nodes$id %in% selected_nodes] <- "target"
-  # df_nodes$color.highlight.border[df_nodes$id %in% selected_nodes] <- "#FF0000"
-  # df_nodes$color.hover.border[df_nodes$id %in% selected_nodes] <- "#FF0000"
-  # df_nodes$color.border <- "rgba(0,0,0,0)"
-  # df_nodes$color.border[!df_nodes$id %in% colnames(CosMatrix)] <- "red"
-  # df_nodes$borderWidth[df_nodes$id  %in% colnames(CosMatrix)] <- 1
-  # df_nodes$shadow.color <- "rgba(0,0,0,0)"
-  # df_nodes$shadow.color[df_nodes$id  %in% colnames(CosMatrix)] <- "grey"
-  
+
   df_nodes$shape <- "box"
   df_nodes$shape[df_nodes$id %in% colnames(CosMatrix)] <- "ellipse"
-  
-  # shadow = list(enabled = TRUE, size = 10)
 
   df_nodes$title = paste0("<b>ID: </b>",df_nodes$id,
                           "<br><b>Description: </b>",dict.combine$Description[match(df_nodes$id,dict.combine$Variable)],
@@ -92,16 +63,6 @@ dataNetwork <- function(selected_nodes, CosMatrix, dict.combine, attrs){
   }
 
   df_nodes$font.background[is.na(df_nodes$font.background)] <- ""
-
-
-  # df_nodes$font.size = 30
-  # nchar40 = nchar(df_nodes$label)>40
-  # df_nodes$font.size[nchar40] = ((df_nodes$font.size[nchar40])*40)/(nchar(df_nodes$label[nchar40]))
-  # df_nodes$font.size[df_nodes$id %in% selected_nodes] = 35
-  # maxcorvalue = sapply(1:nrow(df_nodes), function(i){max(df_edges$corvalue[(df_nodes$id[i]==df_edges$from) | (df_nodes$id[i]==df_edges$to)])})
-  # df_nodes$font.size = df_nodes$font.size*sapply(maxcorvalue, function(x){
-  #   min(max(1,x*5), 3)
-  # })
 
   df_groups = df_nodes[, c("group", "color.background")]
   df_groups <- df_groups[!duplicated(df_groups),]
@@ -150,18 +111,9 @@ plot_network <- function(s, cluster, draw.data, hide_label, CosMatrix, dict.comb
       df_nodes$font.size[df_nodes$nodetype == "other"] <- 30
       df_nodes$font.background <- NA
       df_nodes$label[df_nodes$shape == "box"] <- "        "
-      # attrs$legend_groups$shape[1:7] <- "dot"
       attrs$legend_groups$size[1:7] <- 10
       attrs$legend_groups$borderWidth <- 1
-      # df_nodes$borderWidth <- 2
-      # attrs$legend_groups$color.border <- "#feeeed"
-      # attrs$legend_groups$font.background <- "lightgrey"
-      # attrs$legend_groups$font.color <- "white"
-      # attrs$legend_edges$font.color <- "white"
-      # attrs$legend_edges$font.background <- NA
     }
-    # attrs$legend_groups <- attrs$legend_groups[attrs$legend_groups$label %in% c(unique(df_nodes$Cap_label),
-                                                                                # "Node:", "Group:", "PheCode_\ninterested", "RXNORM_\ninterested"), ]
     
     legend_to_show <- c(5:10)[(attrs$legend_groups$label[5:10] %in% unique(df_nodes$Cap_label[!df_nodes$id %in% colnames(CosMatrix)]))]
 
@@ -193,7 +145,6 @@ plot_network <- function(s, cluster, draw.data, hide_label, CosMatrix, dict.comb
                   stepX = 150,
                   stepY = 70,
                   ncol=1)
-        # layout = ifelse(length(selected_nodes) >= 19, "layout_with_mds", "layout_nicely")
       add_attr_network(p, layout)
     }
 
