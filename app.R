@@ -349,7 +349,8 @@ server <- function(input, output, session) {
     )
     df$istarget = "others"
     df$istarget[df$nodeID %in% colnames(CosMatrix())] <- "target"
-    df[with(df, order(type, id)), ]
+    df <- df[with(df, order(type, id)), ]
+    df <- df[with(df, order(istarget, decreasing = TRUE)), ]
   })
 
   output$ui_table <- renderUI({
