@@ -111,7 +111,7 @@ ui <- function(request) {
       ) %>% 
         helper(type = "markdown",
                colour = "white",
-               title = "The method",
+               title = "Knowledge network construction method",
                content = "method",
                size = "m",
                style = "margin-right: 5px;"),
@@ -223,7 +223,8 @@ ui <- function(request) {
           tabPanel(
             title = "Drugs information",
             br(),
-            uiOutput("ui_drugs")
+            uiOutput("ui_drugs"),
+            uiOutput("ui_med_proc")
           ),
           tabPanel(
             title = "Lab information",
@@ -249,23 +250,33 @@ ui <- function(request) {
     # )
   ),#end dashboardPage
   tags$footer(div(
-    "Teams: ",
+    "Teams:",
     tags$a(href = "https://www.va.gov/", target = "_blank",
            tags$img(src = "https://s3-us-gov-west-1.amazonaws.com/content.www.va.gov/img/header-logo.png", 
                     title="VA", height="40", 
                     class = "footer-logo")),
+    tags$a(href = "https://www.research.va.gov/programs/cipher.cfm", 
+           tags$b("CIPHER"), 
+           target = "_blank",
+           class = "footer-text"),
     tags$a(href = "https://celehs.hms.harvard.edu/", target = "_blank",
            tags$img(src = "celehs_logo_40.png", 
                     title="CELEHS", height="40", 
                     class = "footer-logo")),
+    # tags$a(href = "https://celehs.hms.harvard.edu/", tags$b("CELEHS"), 
+    #        class = "footer-text"),
     tags$a(href = "https://www.verityresearch.org/", target = "_blank",
            tags$img(src = "VERITY_40.png", 
                     title="VERITY (BWH)", height="40", 
                     class = "footer-logo")),
+    # tags$a(href = "https://www.verityresearch.org/", tags$b("VERITY"), 
+    #        class = "footer-text"),
     tags$a(href = "https://parse-health.org/", target = "_blank",
            tags$img(src = "parse_40.png", 
                     title="PARSE health", 
-                    class = "footer-logo"))
+                    class = "footer-logo")),
+    # tags$a(href = "https://parse-health.org/", tags$b("PARSE health"), 
+    #        class = "footer-text")
   
   ), align = "center", class = "footer-bar")
   
@@ -642,15 +653,18 @@ server <- function(input, output, session) {
   ####################  RxNorm  add drug info  #################################
 
   df_drugs <- reactive({
-    full_drug[full_drug$feature_id == node_id(), ]
+    drugs <- full_drug_del_med_proc[full_drug_del_med_proc$feature_id == node_id(), -1]
+    drugs <- drugs[with(drugs, order(LocalDrugNameWithDose, Code)), ]
+    drugs <- drugs[, apply(drugs, 2, function(x){sum(!is.na(x))>0})]
+    if (length(dim(drugs)) == 0){
+      drugs <- data.frame(Code = drugs, DrugClass = NA)
+    }
+    drugs[!duplicated(drugs), ]
   })
 
   output$reac_tb <- renderReactable({
     reactable({
-      drugs <- df_drugs()[, -1]
-      drugs[with(drugs, order(LocalDrugNameWithDose, Code)), ]
-      drugs <- drugs[, apply(drugs, 2, function(x){sum(!is.na(x))>0})]
-      drugs <- drugs[!duplicated(drugs), ]
+      df_drugs()
     },
       groupBy = "Code",
     pagination = FALSE, height = maxHeight() - 450, rownames = FALSE
@@ -658,16 +672,60 @@ server <- function(input, output, session) {
   })
 
   output$ui_drugs <- renderUI({
-    reactableOutput("reac_tb")
+    if (node_id() %in% full_drug_del_med_proc$feature_id){
+        div(
+          h4("Local Drug Information:"),
+          reactableOutput("reac_tb")
+        )
+    } else {
+        ""
+    }
   })
+  
+  output$ui_med_proc <- renderUI({
+    if (node_id() %in% med_proc$feature_id){
+      # v_med_proc <- med_proc$Code[med_proc$feature_id == node_id()]
+      # print(v_med_proc)
+      div(
+        h4("Medication Procedures:"),
+        reactableOutput("tb_med_proc")
+      #   div(
+      #     tags$ul(
+      #       lapply(
+      #         v_med_proc,
+      #         function(x){
+      #           tags$li(
+      #             x
+      #           )
+      #         }
+      #       )
+      #     ), style = paste0("max-height: ", maxHeight() - 450 - 35, "px;
+      #                     overflow: auto;
+      #                     background: #fff;
+      #                     margin-top: 5px;")
+      #   ), style = "box-shadow: #868585 0px 0px 5px;
+      #                    background: #EEEEEE;
+      #                    padding: 5px;"
+      )
+    }
+  })
+  
+  output$tb_med_proc <- renderReactable(reactable(
+    {
+      med_proc[med_proc$feature_id == node_id(), -1]
+    }, fullWidth = FALSE, columns = list(
+      Description = colDef(minWidth = 400)
+    )
+  ))
 
   ############ lab info  #######################################################
   
   output$ui_lab <- renderUI({
     lab_info <- sort(LabMap_0917$LabChemTestName[LabMap_0917$LOINC == node_id()])
     h_lab <- maxHeight() - 450
-    div(
+    div(br(),
       tags$b("LabChemTestName:", style = "padding-left: 5px;"),
+      br(),
       div(
         tags$ul(
           lapply(

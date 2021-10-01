@@ -157,7 +157,7 @@ plot_network <- function(s, cluster, draw.data, hide_label, CosMatrix, dict.comb
     # attrs$legend_groups <- attrs$legend_groups[attrs$legend_groups$label %in% c(unique(df_nodes$Cap_label),
                                                                                 # "Node:", "Group:", "PheCode_\ninterested", "RXNORM_\ninterested"), ]
     
-    ledend_to_show <- na.omit(match(unique(df_nodes$Cap_label[!df_nodes$id %in% colnames(CosMatrix)]), attrs$legend_groups$label))
+    legend_to_show <- c(5:10)[(attrs$legend_groups$label[5:10] %in% unique(df_nodes$Cap_label[!df_nodes$id %in% colnames(CosMatrix)]))]
 
     if(cluster){
       df_nodes$mass[1:length(root.node)]=40
@@ -165,7 +165,7 @@ plot_network <- function(s, cluster, draw.data, hide_label, CosMatrix, dict.comb
       df_edges$length[df_edges$edgetype == "target-target"] = sapply(a, function(x){max(x,300*min(10,length(root.node)))})
       p <- visNetwork(df_nodes, df_edges, width = "100%",height = "100%") %>%
         visLegend(width = 0.09, position = "right",
-                  addNodes = attrs$legend_groups[c(1:4, ledend_to_show, 18, 19), ],
+                  addNodes = attrs$legend_groups[c(1:4, legend_to_show, 18, 19), ],
                   addEdges = attrs$legend_edges,
                   useGroups = FALSE, zoom = TRUE,
                   stepX = 150, stepY = 75,ncol=1) %>%
@@ -178,7 +178,7 @@ plot_network <- function(s, cluster, draw.data, hide_label, CosMatrix, dict.comb
       add_attr_network(p)
     }else{
       p <- visNetwork(df_nodes, df_edges, width = "100%",height = "100%") %>%
-        visLegend(addNodes = attrs$legend_groups[c(1:4, ledend_to_show, 19),],
+        visLegend(addNodes = attrs$legend_groups[c(1:4, legend_to_show, 19),],
                   addEdges = attrs$legend_edges,
                   width = 0.09,
                   position = "right",
