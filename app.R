@@ -372,7 +372,7 @@ server <- function(input, output, session) {
   })
 
   output$df_table <- renderDT(datatable({
-        df_input()
+        df_input()[, 1:2]
       }, rownames = FALSE,
       extensions = c("Buttons", "Select"),
       # callback = JS("table.rows([0,2,3,4,5]).select();"),
