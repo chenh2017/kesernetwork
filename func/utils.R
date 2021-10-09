@@ -2,7 +2,7 @@
 
 
 ## Clicked node text ============================================================
-clickedNodeText <- function(node_id, edge_matrix, dict.combine){
+clickedNodeText <- function(node_id, dict.combine){
   
   title = paste0("<h3>",node_id, " </h3>",
                  "<br><b>Description: </b>",dict.combine$Description[match(node_id,dict.combine$Variable)],
@@ -20,9 +20,7 @@ clickedNodeText <- function(node_id, edge_matrix, dict.combine){
                          dict.combine$marginal_pat_VA[match(node_id,dict.combine$Variable)],2))
   }
 
-  HTML(
-    title
-  )
+  HTML(title)
 }
 
 
@@ -74,5 +72,19 @@ getNeighbors <- function(node, cosmatrix){
 }
 
 
-
+box_info <- function(title, info, height = 500, border_color = "#EEEEEE"){
+  div(
+    p(tags$b(title, style = "padding-left: 5px;"),
+      style = "margin-top: 5px;"),
+    div(info,
+        style = paste0("height: ", height - 45, "px;
+                        overflow: auto;
+                        background: white;
+                        margin-top: 5px;")
+    ), style = paste0("height: ", height, "px;
+                       box-shadow: #868585 0px 0px 5px;
+                       background: ", border_color, ";
+                       padding: 5px;")
+  )
+}
 

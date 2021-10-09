@@ -424,12 +424,14 @@ server <- function(input, output, session) {
         type = 6
       )
     } else {
-      print("network3")
       div(tags$span("Try to click some rows in "),
           tagList(icon("table")),
           tags$spa(" to specify your nodes"),
           align = "center",
-          style = "padding-top: 40px; font-size: 30px; color: white;"
+          style = "padding-top: 40px; 
+                   font-size: 30px; 
+                   color: white; 
+                   height: 1000px;"
       )
     }
   })
@@ -459,7 +461,7 @@ server <- function(input, output, session) {
   })
   
   output$clicked_node_info <- renderUI({
-    clickedNodeText(node_id(), CosMatrix(), dict.combine)
+    clickedNodeText(node_id(), dict.combine)
   })
   
   
@@ -562,7 +564,7 @@ server <- function(input, output, session) {
   
   observeEvent(node_id(), {
     cap <- dict.combine$Capinfo[dict.combine$Variable == node_id()]
-    href = switch(list(CCS = 1, Lab = 2, PheCode = 3, RXNORM = 4)[[cap]], 
+    href = switch(match(cap, c("CCS", "Lab", "PheCode", "RXNORM")), 
                   "https://hcup-us.ahrq.gov/toolssoftware/ccs_svcsproc/ccssvcproc.jsp",
                   "https://loinc.org/multiaxial-hierarchy/",
                   "https://phewascatalog.org/phecodes_icd10cm",
@@ -600,7 +602,7 @@ server <- function(input, output, session) {
   ###################  more tab   ##############################################
   
   observeEvent(node_id(), {
-    if (node_id() %in% c(full_drug_del_med_proc$feature_id, med_proc$feature_id)) {
+    if (node_id() %in% c(full_drug_del_med_proc$feature_id, med_proc$feature_id)){
       showTab(inputId = "hidden_tabs", target = "Drugs information")
     } else {
       hideTab(inputId = "hidden_tabs", target = "Drugs information")
@@ -654,8 +656,7 @@ server <- function(input, output, session) {
     }
   })
   
-  output$tb_med_proc <- renderReactable(reactable(
-    {
+  output$tb_med_proc <- renderReactable(reactable({
       med_proc[med_proc$feature_id == node_id(), -1]
     }, fullWidth = FALSE, columns = list(
       Description = colDef(minWidth = 400)
@@ -666,29 +667,11 @@ server <- function(input, output, session) {
   
   output$ui_lab <- renderUI({
     lab_info <- sort(LabMap_0917$LabChemTestName[LabMap_0917$LOINC == node_id()])
-    h_lab <- maxHeight() - 450
-    div(
-      p(tags$b("LabChemTestName:", style = "padding-left: 5px;"),
-        style = "margin-top: 5px;"),
-      div(
-        tags$ul(
-          lapply(
-            lab_info,
-            function(x){
-              tags$li(
-                x
-              )
-            }
-          )
-        ), style = paste0("height: ", h_lab - 45, "px;
-                          overflow: auto;
-                          background: #fff;
-                          margin-top: 5px;")
-      ), style = paste0("height: ", h_lab, "px;
-                         box-shadow: #868585 0px 0px 5px;
-                         background: #EEEEEE;
-                         padding: 5px;")
-    )
+    box_info(title = "LabChemTestName:", 
+             info = tags$ul(
+                       lapply(lab_info, function(x){ tags$li(x) })
+                     ), 
+             height = maxHeight() - 450)
   })
   
   
