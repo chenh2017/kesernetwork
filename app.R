@@ -15,10 +15,11 @@ library(shinyBS)
 library(shinycssloaders)
 library(shinydashboard)
 library(shinydashboardPlus)
+library(shinyhelper)
 library(shinyWidgets)
 library(stringr)
 library(visNetwork)
-library(shinyhelper)
+library(yaml)
 
 
 load("../data/kesernetwork.RData")
@@ -281,7 +282,10 @@ server <- function(input, output, session) {
   )
   
   steps = read_tsv("doc/steps.tsv")
-
+  attrs = yaml.load_file("www/style.yaml")
+  
+  attrs = lapply(attrs, as.data.frame)
+  
   observeEvent(input$help, {
     if (!input$sidebar) {
       updateSidebar("sidebar")
