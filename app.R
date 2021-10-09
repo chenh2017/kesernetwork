@@ -600,7 +600,7 @@ server <- function(input, output, session) {
   ###################  more tab   ##############################################
   
   observeEvent(node_id(), {
-    if (node_id() %in% full_drug$feature_id) {
+    if (node_id() %in% c(full_drug_del_med_proc$feature_id, med_proc$feature_id)) {
       showTab(inputId = "hidden_tabs", target = "Drugs information")
     } else {
       hideTab(inputId = "hidden_tabs", target = "Drugs information")
@@ -667,9 +667,9 @@ server <- function(input, output, session) {
   output$ui_lab <- renderUI({
     lab_info <- sort(LabMap_0917$LabChemTestName[LabMap_0917$LOINC == node_id()])
     h_lab <- maxHeight() - 450
-    div(br(),
-      tags$b("LabChemTestName:", style = "padding-left: 5px;"),
-      br(),
+    div(
+      p(tags$b("LabChemTestName:", style = "padding-left: 5px;"),
+        style = "margin-top: 5px;"),
       div(
         tags$ul(
           lapply(
@@ -680,7 +680,7 @@ server <- function(input, output, session) {
               )
             }
           )
-        ), style = paste0("height: ", h_lab - 35, "px;
+        ), style = paste0("height: ", h_lab - 45, "px;
                           overflow: auto;
                           background: #fff;
                           margin-top: 5px;")
