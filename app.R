@@ -8,6 +8,7 @@ library(igraph)
 library(Matrix)
 library(plotly)
 library(reactable)
+library(readr)
 library(rintrojs)
 library(shiny)
 library(shinyBS)
@@ -42,20 +43,20 @@ ui <- function(request) {
           status = "primary",
           circle = FALSE,
           selectInput("network_layout", "The layout of network",
-            choices = c("layout_nicely", "layout_with_mds", "layout_with_lgl"), selected = "layout_nicely"
+            choices = c("layout_nicely", "layout_with_mds", "layout_with_lgl"), 
+            selected = "layout_nicely"
           ) %>% 
             helper(type = "markdown",
                    title = "The layout of network",
-                   content = "layout",
+                   content = "helper_layout",
                    size = "m"),
           selectInput("Focus",
             label = "Choose one node to focus on:",
             choices = "All", width = "100%"
           ) %>% 
-            helper(type = "inline",
+            helper(type = "markdown",
                    title = "Focus on node",
-                   content = c("Select a center node to focus on.",
-                               "The view will lock onto that node."),
+                   content = "helper_focuson",
                    size = "s"),
           sliderInput("scale_id", "Focus scale (zoomlevel):", width = "100%", 
                       min = 1, max = 10, value = 5),
@@ -111,7 +112,7 @@ ui <- function(request) {
         helper(type = "markdown",
                colour = "white",
                title = "Knowledge network construction method",
-               content = "method",
+               content = "helper_dataset",
                size = "m",
                style = "margin-right: 5px;"),
       id = "divselectmethod"),
@@ -119,7 +120,7 @@ ui <- function(request) {
         helper(type = "markdown",
                colour = "white",
                title = "The input table",
-               content = "input_table",
+               content = "helper_input_table",
                size = "m",
                style = "margin-right: 5px;"),
       uiOutput("ui_table"),
@@ -145,12 +146,10 @@ ui <- function(request) {
           6,
           div(
             checkboxInput("cluster", "Cluster by groups", value = FALSE) %>% 
-              helper(type = "inline",
+              helper(type = "markdown",
                      colour = "white",
                      title = "Cluster by groups",
-                     content = c("If checked, the nodes with same group will be collasped into database-shaped nodes.",
-                                 "<b>Click</b> node to view groups informations.",
-                                 "<b>Double-click</b> node to expand/re-collapse groups."),
+                     content = "helper_clustergroup",
                      size = "m"),
             checkboxInput("hide_labels", "Hide the labels", value = TRUE),
             id = "div_checkbox"
@@ -233,14 +232,14 @@ ui <- function(request) {
         ) %>% 
           helper(type = "markdown",
                  title = "The plots and tables",
-                 content = "tabs_nodeinfo",
+                 content = "helper_tabs_nodeinfo",
                  size = "m")
       ),
       uiOutput("ui_selectedcluster"),
       bsModal(
         id = "instruction", title = "Instruction", trigger = "instruct",
         size = "large",
-        includeMarkdown("www/documentation.md")
+        includeMarkdown("doc/documentation.md")
       )
     )
   ),#end dashboardPage
@@ -280,6 +279,8 @@ server <- function(input, output, session) {
   showNotification("Click 'Help' button to open step-by-step instructions.",
     duration = 3, type = "warning"
   )
+  
+  steps = read_tsv("doc/steps.tsv")
 
   observeEvent(input$help, {
     if (!input$sidebar) {
@@ -293,7 +294,7 @@ server <- function(input, output, session) {
     )
   })
   
-  observe_helpers(help_dir = "helper_mds")
+  observe_helpers(help_dir = "doc")
   
   
   ####################  input   #################################################
