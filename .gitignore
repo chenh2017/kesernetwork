@@ -1,0 +1,7 @@
+inst/doc
+/doc/
+/Meta/
+/_test/
+/data-raw/
+.Rhistory
+.Rproj.user
